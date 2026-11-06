@@ -1,0 +1,44 @@
+name: nix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  darwin:
+    name: build darwinConfigurations.mac-studio
+    runs-on: macos-15 # Apple Silicon (aarch64-darwin)
+    timeout-minutes: 60
+    env:
+      DEVENV_USER: ${{ secrets.DEVENV_USER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: DeterminateSystems/determinate-nix-action@16f94ba7aae399b9f9077c254b6719ec6de7e3e3 # v3.24.2
+
+      - name: Require DEVENV_USER secret
+        run: |
+          if [ -z "$DEVENV_USER" ]; then
+            echo "::error::Repository secret DEVENV_USER is not set"
+            exit 1
+          fi
+
+      - name: Check formatting
+        run: nix fmt -- --check flake.nix hosts/mac-studio/darwin.nix home/guillermo.nix
+
+      - name: Flake check
+        run: nix flake check --impure --all-systems --no-build
+
+      - name: Build system
+        run: nix build --impure --print-build-logs '.#darwinConfigurations.mac-studio.system'
