@@ -29,7 +29,8 @@
   system.defaults.finder.AppleShowAllExtensions = true;
 
   # Homebrew stays managed by ~/Brewfile for now (not declared here on purpose).
-  # Touch ID for sudo is already enabled via /etc/pam.d/sudo_local (left unmanaged).
+  # Touch ID for sudo (writes /etc/pam.d/sudo_local, which survives macOS updates).
+  security.pam.services.sudo_local.touchIdAuth = true;
 
   system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = 6;
