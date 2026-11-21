@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-21T19:57:14Z",
+  "recorded_at": "2026-11-21T20:03:00Z",
   "branch": "nix-darwin-mac-studio",
   "observed_via": "gh run list",
   "runs": [
@@ -24,5 +24,10 @@
     ".github/workflows/harness-checkpoints.yml HARNESS_RUNNER_REF=main",
     "nixfmt on hosts/home/homelab modules (Check formatting failed)"
   ],
-  "controller_tests_job": "success on 44943663095"
+  "controller_tests_job": "success on 44943663095",
+  "after_db2f1e8": {
+    "Harness Verification": "success 44944032479",
+    "Shipped Checkpoints": "success 44944032339",
+    "nix": "failure 44944032192 \u2014 pkgs.opa missing; fix to open-policy-agent pending push"
+  }
 }

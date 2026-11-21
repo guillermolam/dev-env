@@ -1,7 +1,7 @@
 # --- Agent Harness Targets ---
 # See AGENTS.md for available commands.
 
-.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 openshell-status openshell-provision openshell-start openshell-stop openshell-restart
+.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap checklist-evidence prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 openshell-status openshell-provision openshell-start openshell-stop openshell-restart
 
 ## Verify harness consistency (docs, references, commands)
 verify-harness:
@@ -18,6 +18,10 @@ check-recovery:
 ## New-Mac cold-start checks (never activates)
 new-mac-bootstrap:
 	@sh scripts/new-mac-bootstrap.sh
+
+## Capture auto-fillable CHECKLISTS evidence (never activates / never claims B)
+checklist-evidence:
+	@sh scripts/checklist-evidence.sh
 
 ## Stage opa+restic digests for OpenShell upload (no sandbox create)
 prepare-controller-uploads:

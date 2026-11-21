@@ -1,39 +1,25 @@
 # Goal scoreboard — recover-ready deterministic system
 
-Updated: 2026-11-21 (evening). Evidence-only. Not a completion claim.
+Updated: 2026-11-21T20:03Z. Evidence-only. Not a completion claim.
 
 | Requirement | Status | Evidence | Gap |
 | --- | --- | --- | --- |
-| Deterministic Nix rebuild | Partial | Flake + packages; HM profile; darwin gcroot absent | Operator `darwin-rebuild` |
-| Auto-update gates (OPA) | Code-ready | Rego tests green; production apply disabled | Enable only after doctor.ready + rollback |
-| Top security posture | Baseline **approved** | `make doctor` + evidence → sole local-only restic blocker; stealth still off | Offsite + T17 + stealth |
-| Automated operations | Partial | Doctor sole blocker = local-only restic (`make doctor`) | R2 token → rclone → bootstrap-offsite |
-| Self-improvement | Partial | Harness L3 local; **Harness Verification CI green**; Shipped Checkpoints failed on wrong runner pin (fix staged) | Push fix; nix CI green |
-| Reliability / backup | **Blocked on credentials** | Local OK; R2 bucket `mac-env-restic` ready; rclone remotes empty | Operator R2 API token |
-| Compromise recovery path | Documented | CHECKLISTS.md B + RUNBOOK | Spare/clean device drill timed |
-| New Mac path | Scripted | `scripts/new-mac-bootstrap.sh` | Section A filled |
-| Agent confinement | Partial | Controller proven earlier; host gateway LaunchAgent **not** provisioned (`make openshell-status`) | Operator `make openshell-provision` |
-| Hosted CI | Mixed | Harness Verification success (`receipts/ci-observe-2026-11-21.json`); checkpoints fail fixed locally | Re-observe after push |
-| uv / git hooks | Unblocked | Homebrew uv + hooks | Keep on PATH |
-| HOME agent inventory | Done (host) | 35 rows under state dir | T17 cutover |
-
-## Live receipts this goal
-
-- `receipts/recovery-drill-2026-11-21.json`
-- `receipts/local-bootstrap-2026-11-21.json`
-- `receipts/local-restore-roundtrip-2026-11-21.json`
-- `receipts/openshell-image-2026-11-21.json`
-- `receipts/security-live-2026-11-21.json`
-- `receipts/r2-bucket-2026-11-21.json`
-- `receipts/ci-observe-2026-11-21.json`
+| Deterministic Nix rebuild | Partial | Format OK; flake `opa` → `open-policy-agent` fix ready; nix-daemon down locally | Push opa fix; operator `darwin-rebuild` |
+| Auto-update gates (OPA) | Code-ready | Rego tests green; production apply disabled | Enable only after doctor.ready |
+| Top security posture | Baseline approved | `make doctor` sole blocker = local-only restic | Offsite + stealth |
+| Automated operations | Partial | Doctor sole local-only blocker | R2 token → bootstrap-offsite |
+| Self-improvement | Strong | Harness L3; **Harness Verification + Shipped Checkpoints CI green** (`44944032479`, `44944032339`) | nix CI green after opa attr fix |
+| Reliability / backup | Blocked on credentials | Local OK; R2 bucket ready; rclone empty | Operator R2 API token |
+| Compromise recovery path | Documented | CHECKLISTS B | Spare/clean device drill |
+| New Mac path | Partial evidence | `make checklist-evidence` receipt; A3/A4 filled | Spare Mac A1–A13 |
+| Agent confinement | Partial | Controller proven earlier; gateway LaunchAgent not provisioned | `make openshell-provision` |
+| Hosted CI | Mixed | Checkpoints+harness green; nix flake check fails on `pkgs.opa` | Push `open-policy-agent` fix |
 
 ## Still blocking UpdateGoal(complete)
 
-1. **Offsite:** Cloudflare R2 API token → `make rclone-r2` → 1P → `sh scripts/bootstrap-offsite-once.sh --confirm`
-2. Spare-machine CHECKLISTS A/B with initials/times
-3. Hosted CI: checkpoints pin fix + green nix
-4. Optional: OpenShell LaunchAgent provision; `sudo` stealth; T17 cutover
+1. Offsite R2 API token → `make rclone-r2` → bootstrap-offsite
+2. Spare-machine CHECKLISTS A/B with initials
+3. nix CI green after opa package attr fix
+4. Optional: OpenShell LaunchAgent; stealth; T17
 
-Done (evidence): harness L3, local restore round-trip, security live+baseline, OpenShell controller 71/71, R2 bucket, harness CI green, `make doctor` sole local-only blocker.
-
-Operator progress probe: `make goal-progress` / `make doctor`
+Operator: `make goal-progress` / `make doctor` / `make checklist-evidence`

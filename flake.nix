@@ -72,13 +72,13 @@
         export PATH=${
           pkgs.lib.makeBinPath [
             pkgs.python3
-            pkgs.opa
+            pkgs.open-policy-agent
             pkgs.nix
             pkgs.restic
           ]
         }:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
         export PYTHONPATH=${operationsSrc}
-        export MAC_ENV_OPA=${pkgs.opa}/bin/opa
+        export MAC_ENV_OPA=${pkgs.open-policy-agent}/bin/opa
         export MAC_ENV_POLICY=${operationsSrc}/policy
         export MAC_ENV_RESTIC=''${MAC_ENV_RESTIC:-${pkgs.restic}/bin/restic}
         exec ${pkgs.python3}/bin/python3 -m mac_env "$@"
@@ -89,7 +89,7 @@
       packages.aarch64-darwin = {
         inherit mac-env;
         default = mac-env;
-        opa = pkgs.opa;
+        opa = pkgs.open-policy-agent;
         restic = pkgs.restic;
         vulnix = pkgs.vulnix;
         colima = pkgs.colima;

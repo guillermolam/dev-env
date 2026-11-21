@@ -46,8 +46,9 @@ PYTHONPATH=operations python3 -m mac_env agents inventory \
 # Recovery prerequisites (non-mutating)
 sh scripts/check-recovery-prereqs.sh
 
-# New-Mac cold-start checks (never activates darwin-rebuild)
-sh scripts/new-mac-bootstrap.sh
+# New-Mac cold-start + checklist evidence capture (never activates)
+make new-mac-bootstrap
+make checklist-evidence
 
 # OpenShell gateway (Nix-pinned 0.1.9; no Homebrew)
 # docs/openshell/PROVISION.md
