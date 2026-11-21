@@ -1,0 +1,11 @@
+{
+  "event": "recovery-drill",
+  "ok": true,
+  "date": "2026-11-21",
+  "restic_version": "0.19.1",
+  "restic_source": "nix build .#restic → /nix/store/…-restic-0.19.1",
+  "snapshot_id": "073104117a1606a3700a709e4fb96159fdb2662eb95e2fc04a1c8b6d0ab8587b",
+  "workspace": ".cache/recovery-drill-live (gitignored)",
+  "notes": "Disposable local repo only. Does not satisfy production MAC_ENV_RESTIC_REPOSITORY.",
+  "password": "[not recorded]"
+}

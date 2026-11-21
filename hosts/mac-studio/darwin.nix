@@ -6,6 +6,12 @@
   ...
 }:
 {
+  imports = [
+    ./netbird.nix
+    ./container-runtimes.nix
+    ./homelab-services.nix
+  ];
+
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   # Determinate Nix owns the Nix install, daemon and /etc/nix/nix.conf.

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Fast local gate mirroring CI's harness + controller checks.
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
+
+sh scripts/with-bash4.sh scripts/verify-harness.sh --format=text
+
+if [ -x operations/.cache/quality/bin/ruff ]; then
+	operations/.cache/quality/bin/ruff check operations
+	operations/.cache/quality/bin/ruff format --check operations
+	operations/.cache/quality/bin/python operations/tools/check_complexity.py
+fi

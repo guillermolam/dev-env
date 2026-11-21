@@ -1,0 +1,19 @@
+{
+  "event": "baseline-approved",
+  "ok": true,
+  "date": "2026-11-21",
+  "approver": "glam",
+  "automatic": false,
+  "state_dir": ".cache/mac-env-state/baseline.json",
+  "collectors_ok": ["vulnix", "firewall", "tooling", "access", "integrity"],
+  "vulnix_findings": 96,
+  "vulnix_critical": 0,
+  "firewall_findings": ["stealth_mode_off"],
+  "doctor_after": {
+    "ready": false,
+    "remaining_blockers": [
+      "backup destination is local-only; configure offsite MAC_ENV_RESTIC_REPOSITORY"
+    ]
+  },
+  "notes": "Approved from live evidence candidate. Homelab SSH targets unreachable (ping loss); rclone remotes empty."
+}

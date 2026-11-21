@@ -1,0 +1,10 @@
+{
+  "event": "agent-inventory",
+  "ok": true,
+  "date": "2026-11-21",
+  "rows": 35,
+  "errors": 0,
+  "coverage_complete": true,
+  "output_outside_git": "$HOME/.local/state/mac-environment/agent-inventory",
+  "notes": "Hashes/metadata only. T17 cutover not claimed."
+}

@@ -1,0 +1,19 @@
+# OpenShell policy for mac-env-controller (matches mac-env-work schema).
+# Applied at create time. Agents must not re-policy after create without review.
+version: 1
+filesystem_policy:
+  include_workdir: true
+  read_only:
+    - /bin
+    - /usr
+    - /lib
+    - /proc
+    - /dev/urandom
+    - /etc
+    - /var/log
+    - /opt
+  read_write:
+    - /tmp
+    - /dev/null
+landlock:
+  compatibility: best_effort

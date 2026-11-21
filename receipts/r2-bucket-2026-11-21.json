@@ -1,0 +1,19 @@
+{
+  "recorded_at": "2026-11-21T12:13:34Z",
+  "provider": "cloudflare_r2",
+  "account_name": "Lam Cloud Security LLC",
+  "bucket": "mac-env-restic",
+  "location": "WEUR",
+  "storage_class": "Standard",
+  "created": true,
+  "empty": true,
+  "purpose": "dedicated offsite restic destination for mac-env",
+  "do_not_use": ["platform-tofu-state"],
+  "still_required": [
+    "R2 API token (Object Read & Write, bucket-scoped) in Cloudflare dashboard",
+    "rclone config create r2 s3 provider=Cloudflare ...",
+    "1P mac-env-offsite: MAC_ENV_RESTIC_REPOSITORY=rclone:r2:mac-env-restic/...",
+    "sh scripts/bootstrap-offsite-once.sh --confirm"
+  ],
+  "docs": "docs/operations/offsite-restic.md Path C"
+}

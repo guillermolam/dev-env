@@ -1,0 +1,16 @@
+{
+  "event": "timed-recovery-checks",
+  "ok": true,
+  "date": "2026-11-21",
+  "utc_start": "2026-11-21T12:01:54Z",
+  "utc_end": "2026-11-21T12:01:54Z",
+  "checks": {
+    "new-mac-bootstrap_syntax": "pass",
+    "check-recovery-prereqs": "partial (restic via staged upload; local-only repo still set)",
+    "local_restore_roundtrip": "pass (earlier receipt)",
+    "openshell_controller_tests": "71/71",
+    "CHECKLISTS_section_A_filled": false,
+    "CHECKLISTS_section_B_filled": false
+  },
+  "notes": "Not a spare-machine drill. Section A/B initials still required on a clean device."
+}

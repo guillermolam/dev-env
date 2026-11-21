@@ -1,0 +1,16 @@
+schema_version = 1
+
+[updates]
+default_tool_mode = "manual"
+allow_reboot = false
+allow_major = false
+allow_removals = false
+require_rollback = true
+require_ac_power = true
+max_evidence_age_seconds = 86400
+max_backup_age_seconds = 86400
+max_new_findings = 0
+max_critical = 0
+min_free_bytes = 21474836480
+maintenance_start = "03:00"
+maintenance_end = "05:00"

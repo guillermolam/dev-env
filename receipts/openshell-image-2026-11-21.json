@@ -1,0 +1,1 @@
+{"event":"docker-image-build","ok":true,"date":"2026-11-21","tag":"mac-env-controller:local","image_id":"sha256:987c64bd33f457eaaf51af2c08d2d776bdeb0f72382911713408628ffd5f2347","base":"ubuntu:24.04@sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289","openshell_create":false,"notes":"Image built locally; sandbox create remains operator-gated."}

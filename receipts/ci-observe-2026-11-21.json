@@ -1,0 +1,1 @@
+{"event":"ci-observe","date":"2026-11-21","branch":"nix-darwin-mac-studio","last_green_nix_ci":"2026-11-06","harness_workflows_on_remote":false,"note":"Harness YAML exists locally untracked/unpushed; push required for harness-verify CI."}

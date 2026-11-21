@@ -1,0 +1,6 @@
+# Checkpoints that CI must run (see .github/workflows/harness-checkpoints.yml).
+# Pin refs so the gate cannot drift without a commit here.
+skills:
+  - repo: netresearch/agent-harness-skill
+    ref: v1.10.0
+    path: skills/agent-harness/checkpoints.yaml

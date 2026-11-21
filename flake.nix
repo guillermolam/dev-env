@@ -37,10 +37,72 @@
         (env "SUDO_USER")
         (env "USER")
       ];
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      homelab = import ./homelab/config.nix;
+      runtimePkgs = import nixpkgs {
+        system = "aarch64-darwin";
+        config.allowUnfreePredicate = pkg: nixpkgs.lib.getName pkg == "orbstack";
+      };
+      runtimePackages = import ./homelab/runtime-packages.nix {
+        pkgs = runtimePkgs;
+        inherit (nixpkgs) lib;
+      };
+      operationsSrc = builtins.path {
+        name = "mac-env-operations";
+        path = ./operations;
+        filter =
+          path: type:
+          let
+            base = baseNameOf path;
+          in
+          base != "__pycache__"
+          && base != ".cache"
+          && base != ".DS_Store"
+          && !(nixpkgs.lib.hasSuffix ".pyc" base);
+      };
+      # Host Homebrew stays reachable for collectors; installed LaunchDaemon must
+      # set MAC_ENV_STATE_DIR=/private/var/lib/mac-environment explicitly.
+      mac-env = pkgs.writeScriptBin "mac-env" ''
+        #!${pkgs.runtimeShell}
+        set -eu
+        export PATH=${
+          pkgs.lib.makeBinPath [
+            pkgs.python3
+            pkgs.opa
+            pkgs.nix
+            pkgs.restic
+          ]
+        }:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
+        export PYTHONPATH=${operationsSrc}
+        export MAC_ENV_OPA=${pkgs.opa}/bin/opa
+        export MAC_ENV_POLICY=${operationsSrc}/policy
+        export MAC_ENV_RESTIC=''${MAC_ENV_RESTIC:-${pkgs.restic}/bin/restic}
+        exec ${pkgs.python3}/bin/python3 -m mac_env "$@"
+      '';
     in
     {
+      # Packaging does not activate the controller. darwin-rebuild switch is a separate step.
+      packages.aarch64-darwin = {
+        inherit mac-env;
+        default = mac-env;
+        opa = pkgs.opa;
+        restic = pkgs.restic;
+        vulnix = pkgs.vulnix;
+        colima = pkgs.colima;
+        incus-client = pkgs.incus.client;
+        inherit (runtimePackages) podman podman-desktop orbstack;
+        netbird-installer = (import ./homelab/netbird-package.nix { pkgs = runtimePkgs; }).installer;
+      };
+
       darwinConfigurations.mac-studio = nix-darwin.lib.darwinSystem {
-        specialArgs = { inherit inputs self user; };
+        specialArgs = {
+          inherit
+            inputs
+            self
+            user
+            homelab
+            ;
+        };
         modules = [
           ./hosts/mac-studio/darwin.nix
           home-manager.darwinModules.home-manager
@@ -48,12 +110,14 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.backupFileExtension = "before-home-manager";
-            home-manager.extraSpecialArgs = { inherit inputs user; };
+            home-manager.extraSpecialArgs = {
+              inherit inputs user homelab;
+            };
             home-manager.users.${user} = ./home/guillermo.nix;
           }
         ];
       };
 
-      formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt;
+      formatter.aarch64-darwin = pkgs.nixfmt;
     };
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.lamcloud.mac-environment</string>
+  <key>Disabled</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/private/var/lib/mac-environment/bin/mac-env</string>
+    <string>daily</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>MAC_ENV_STATE_DIR</key>
+    <string>/private/var/lib/mac-environment</string>
+    <key>MAC_ENV_USE_INSTALLED_STATE</key>
+    <string>1</string>
+    <key>MAC_ENV_LOG_DIR</key>
+    <string>/private/var/log/mac-environment</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+
+  <dict>
+    <key>Hour</key>
+    <integer>3</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+</dict>
+</plist>

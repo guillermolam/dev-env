@@ -1,0 +1,11 @@
+{
+  "event": "backup-bootstrap-local",
+  "ok": true,
+  "date": "2026-11-21",
+  "snapshot_id": "545e2c1b6d3049dd836a3896fc9d43cf496a2319e069756d5bc00797c437827d",
+  "state_dir": ".cache/mac-env-state (gitignored)",
+  "fixture_path": ".cache/bootstrap-fixture/note.txt",
+  "offsite": false,
+  "password": "[not recorded]",
+  "notes": "Operator-confirmed local recovery point only. Not a substitute for offsite MAC_ENV_RESTIC_REPOSITORY."
+}
