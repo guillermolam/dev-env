@@ -50,6 +50,12 @@ sh scripts/check-recovery-prereqs.sh
 make new-mac-bootstrap
 make checklist-evidence
 
+# Container runtimes (OrbStack/Podman/Colima; Nix flake only; headless CLI)
+# docs/operations/container-runtimes.md
+make runtimes-status
+make runtimes-provision
+make runtimes-start
+
 # OpenShell gateway (Nix-pinned 0.1.9; no Homebrew)
 # docs/openshell/PROVISION.md
 make openshell-status
@@ -82,8 +88,9 @@ DEVENV_USER="$USER" nix build --impure --print-build-logs \
 ```
 
 Operator-only: `darwin-rebuild switch`, `sudo`, `launchctl`, baseline
-`--confirm`, live restore, OpenShell `provision`/`start`/`stop`/`restart`,
-gateway/policy/providers, backup destination/password-file. Installer refuses:
+`--confirm`, live restore, OpenShell and container-runtime
+`provision`/`start`/`stop`/`restart` scripts, gateway/policy/providers,
+backup destination/password-file. Installer refuses:
 `sh operations/deploy/install.sh`.
 
 ## Rules

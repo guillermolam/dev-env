@@ -15,6 +15,8 @@ T13,partial,Local 10 Rego and 67 Python tests,CI and Nix package build not execu
 T14,tested-locally,378 functions max complexity 3/3 Ruff and Python tests pass,hosted CI and Nix build not run
 T15,bootstrap-verified,OpenShell 0.1.9 mTLS and isolation denial checks passed,fleet confinement not established
 T28,implemented,Nix openshell package + openshell-provision.sh + HM LaunchAgent wiring,operator must run make openshell-provision/start; not yet live-verified this session
+T29,tested-live,container-runtimes-provision.sh + brew-purge; brew gone; OrbStack/Podman/Colima/Desktop running from Nix,nix-daemon down so flake rebuild deferred; HM activation still separate
+T29,implemented,container-runtimes-provision.sh + brew-purge for OrbStack/Podman/Colima,live stop+brew-purge pending operator run; HM activation still separate
 T16,tested-locally,Scoped agent inventory hashes CSV/MD fixtures,operator HOME scan and OpenShell cutover pending
 T17,planned,Agent and tool migration acceptance specified,per-agent integration and reviewed cutover
 T18,planned,Identity audit and OPA failure cases specified,telemetry integration

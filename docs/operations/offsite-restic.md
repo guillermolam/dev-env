@@ -37,17 +37,17 @@ PYTHONPATH=operations python3 -m mac_env backup bootstrap-offsite --confirm \
 Bucket `mac-env-restic` exists and is empty. Operator creates an R2 API token
 (Object Read & Write, scoped to that bucket) in the Cloudflare dashboard, then:
 
+Preferred (uses local Wrangler OAuth; never prints secrets):
+
 ```sh
-# Create token in dashboard (Object Read & Write → bucket mac-env-restic only):
-# https://dash.cloudflare.com/?to=/:account/r2/api-tokens
-# secrets only in env / rclone.conf / 1P — never in Git
-export CLOUDFLARE_ACCOUNT_ID='<account_id>'
-export R2_ACCESS_KEY_ID='...'
-export R2_SECRET_ACCESS_KEY='...'
-sh scripts/rclone-r2-configure.sh
+export CLOUDFLARE_ACCOUNT_ID='e89b452f10f28f09ecc0994164a26b49'  # Lam Cloud Security LLC
+make r2-token-rclone   # scripts/r2-token-to-rclone.sh --confirm
 sh scripts/rclone-offsite-check.sh
 export MAC_ENV_RESTIC_REPOSITORY='rclone:r2:mac-env-restic/mac-studio'
 ```
+
+Manual alternative (dashboard Object Read & Write → bucket `mac-env-restic` only):
+https://dash.cloudflare.com/?to=/:account/r2/api-tokens — then `make rclone-r2`.
 
 Then run Path A bootstrap-offsite with that repository.
 

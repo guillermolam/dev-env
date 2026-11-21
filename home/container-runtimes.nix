@@ -78,6 +78,9 @@ in
           ${orb} config set "$key" "$desired"
         fi
       }
+      # docs.orbstack.dev/headless — no admin GUI prompts for CLI/CI use.
+      reconcile_orb setup.use_admin false
+      reconcile_orb app.start_at_login false
       reconcile_orb docker.expose_ports_to_lan false
       reconcile_orb machines.expose_ports_to_lan false
       reconcile_orb cpu 4

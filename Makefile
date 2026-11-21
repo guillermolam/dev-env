@@ -1,7 +1,7 @@
 # --- Agent Harness Targets ---
 # See AGENTS.md for available commands.
 
-.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap checklist-evidence prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 openshell-status openshell-provision openshell-start openshell-stop openshell-restart
+.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap checklist-evidence prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 r2-token-rclone openshell-status openshell-provision openshell-start openshell-stop openshell-restart runtimes-status runtimes-provision runtimes-start runtimes-stop runtimes-restart
 
 ## Verify harness consistency (docs, references, commands)
 verify-harness:
@@ -43,6 +43,10 @@ offsite-preflight:
 rclone-r2:
 	@sh scripts/rclone-r2-configure.sh
 
+## Create bucket-scoped R2 API token from wrangler OAuth → rclone (operator --confirm)
+r2-token-rclone:
+	@sh scripts/r2-token-to-rclone.sh --confirm
+
 ## OpenShell gateway status (read-only)
 openshell-status:
 	@sh scripts/openshell-provision.sh status
@@ -62,3 +66,23 @@ openshell-stop:
 ## Restart OpenShell LaunchAgent (operator --confirm)
 openshell-restart:
 	@sh scripts/openshell-provision.sh restart --confirm
+
+## Container runtimes status (OrbStack/Podman/Colima; read-only)
+runtimes-status:
+	@sh scripts/container-runtimes-provision.sh status
+
+## Build flake runtimes + write configs (operator --confirm)
+runtimes-provision:
+	@sh scripts/container-runtimes-provision.sh provision --confirm
+
+## Start OrbStack, Podman machine, Colima, Podman Desktop (operator --confirm)
+runtimes-start:
+	@sh scripts/container-runtimes-provision.sh start --confirm
+
+## Stop/kill container runtimes (operator --confirm)
+runtimes-stop:
+	@sh scripts/container-runtimes-provision.sh stop --confirm
+
+## Restart container runtimes (operator --confirm)
+runtimes-restart:
+	@sh scripts/container-runtimes-provision.sh restart --confirm
