@@ -49,54 +49,40 @@ sh scripts/check-recovery-prereqs.sh
 # New-Mac cold-start checks (never activates darwin-rebuild)
 sh scripts/new-mac-bootstrap.sh
 
+# OpenShell gateway (Nix-pinned 0.1.9; no Homebrew)
+# docs/openshell/PROVISION.md
+make openshell-status
+make openshell-provision   # --confirm inside target
+make openshell-start       # LaunchAgent + wait for status/whoami
+
 # OpenShell controller create (operator-only runbook)
 # docs/openshell/CREATE.md
 # Stage opa+restic digests (no sandbox create):
 make prepare-controller-uploads
 
-# Goal gap scoreboard (evidence-only)
-# receipts/GOAL-SCOREBOARD.md
+# Scoreboard: receipts/GOAL-SCOREBOARD.md  |  vulnix: nix build .#vulnix
 
-# Optional vulnix package (profile scan when no current-system)
-# nix build .#vulnix
-
-# Local restic bootstrap (operator --confirm; writes under state_dir)
+# Local/offsite restic (operator --confirm; offsite refuses …/local-restic/…)
 PYTHONPATH=operations python3 -m mac_env backup bootstrap-local --confirm \
   --path "$HOME/Documents" --restic ./result/bin/restic
-
-# Offsite preflight + R2 Path C (bucket mac-env-restic; needs R2 API token)
-make offsite-preflight
-# export CLOUDFLARE_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY then:
-make rclone-r2
-# Offsite restic (operator --confirm; refuses …/local-restic/…)
-PYTHONPATH=operations python3 -m mac_env backup bootstrap-offsite --confirm \
-  --repository "$MAC_ENV_RESTIC_REPOSITORY" \
-  --password-file "$MAC_ENV_RESTIC_PASSWORD_FILE" \
-  --path "$HOME/Documents" --restic ./result/bin/restic
+make offsite-preflight   # then: make rclone-r2 (R2 Path C; needs token env)
+# docs/operations/offsite-restic.md → sh scripts/bootstrap-offsite-once.sh --confirm
 PYTHONPATH=operations python3 -m mac_env backup status
-
-# Goal progress probe (sources private evidence exports if present)
 sh scripts/goal-progress.sh
 
-# Offsite restic operator guide
-# docs/operations/offsite-restic.md
-# After rclone remote exists:
-# sh scripts/bootstrap-offsite-once.sh --confirm
-
-# Honest evidence files (will report gaps until sources exist)
+# Honest evidence (gaps until sources exist); schema: docs/operations/security-evidence.md
 PYTHONPATH=operations python3 -m mac_env security scaffold-evidence \
   --output "$HOME/.local/state/mac-environment/evidence"
-# Schema + attestation guide: docs/operations/security-evidence.md
 
-# Nix (operator or approved native builder; impure username)
+# Nix (operator/approved builder; impure username)
 DEVENV_USER="$USER" nix flake check --impure --all-systems --no-build
 DEVENV_USER="$USER" nix build --impure --print-build-logs \
   '.#darwinConfigurations.mac-studio.system'
 ```
 
-Operator-only (never agent-owned): `darwin-rebuild switch`, `sudo`,
-`launchctl`, baseline `--confirm`, live restore, OpenShell gateway/policy/providers,
-backup destination/password-file. Installer refuses by design:
+Operator-only: `darwin-rebuild switch`, `sudo`, `launchctl`, baseline
+`--confirm`, live restore, OpenShell `provision`/`start`/`stop`/`restart`,
+gateway/policy/providers, backup destination/password-file. Installer refuses:
 `sh operations/deploy/install.sh`.
 
 ## Rules
