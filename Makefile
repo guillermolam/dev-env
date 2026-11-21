@@ -1,11 +1,15 @@
 # --- Agent Harness Targets ---
 # See AGENTS.md for available commands.
 
-.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap checklist-evidence prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 r2-token-rclone openshell-status openshell-provision openshell-start openshell-stop openshell-restart runtimes-status runtimes-provision runtimes-start runtimes-stop runtimes-restart
+.PHONY: verify-harness harness-status check-agents check-recovery new-mac-bootstrap checklist-evidence prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 r2-token-rclone openshell-status openshell-provision openshell-start openshell-stop openshell-restart runtimes-status runtimes-provision runtimes-start runtimes-stop runtimes-restart
 
 ## Verify harness consistency (docs, references, commands)
 verify-harness:
 	@sh scripts/with-bash4.sh scripts/verify-harness.sh --format=text
+
+## Platform team specs keep the stop set and the paired workflows
+check-agents:
+	@sh scripts/check-agents.sh
 
 ## Show current harness maturity level
 harness-status:

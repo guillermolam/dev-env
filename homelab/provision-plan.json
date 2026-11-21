@@ -1,0 +1,114 @@
+[
+  {
+    "id": "cli.nixpkgs",
+    "surface": "cli",
+    "nix": "pkgs.restic pkgs.open-policy-agent pkgs.vulnix pkgs.uv pkgs.rclone pkgs.nil pkgs.nixfmt pkgs.python3",
+    "then": null,
+    "when": "nix_built",
+    "how": "Home Manager home.packages or flake packages.aarch64-darwin"
+  },
+  {
+    "id": "library.nixpkgs",
+    "surface": "library",
+    "nix": "nixpkgs",
+    "then": null,
+    "when": "nix_built",
+    "how": "same nixpkgs revision as the CLI that imports the library"
+  },
+  {
+    "id": "sdk.openshell",
+    "surface": "sdk",
+    "nix": "packages.aarch64-darwin.openshell",
+    "then": null,
+    "when": "nix_built",
+    "how": "pin gateway, supervisor, and SDK as one release; the CLI stays outside the sandbox"
+  },
+  {
+    "id": "hypervisor.orbstack",
+    "surface": "hypervisor",
+    "nix": "packages.aarch64-darwin.orbstack",
+    "then": "orbstack",
+    "when": "runtime_up",
+    "how": "Nix installs the package; make runtimes-start is the later playbook"
+  },
+  {
+    "id": "hypervisor.podman",
+    "surface": "hypervisor",
+    "nix": "packages.aarch64-darwin.podman",
+    "then": "podman",
+    "when": "runtime_up",
+    "how": "podman machine init/start after the pinned remote client exists"
+  },
+  {
+    "id": "hypervisor.colima",
+    "surface": "hypervisor",
+    "nix": "packages.aarch64-darwin.colima",
+    "then": "colima",
+    "when": "runtime_up",
+    "how": "colima start after the Nix package and incus client exist"
+  },
+  {
+    "id": "container.podman",
+    "surface": "container",
+    "nix": "packages.aarch64-darwin.podman",
+    "then": "podman",
+    "when": "runtime_up",
+    "how": "quadlet or podman run only after the machine is up"
+  },
+  {
+    "id": "kubernetes.cluster",
+    "surface": "kubernetes",
+    "nix": "homelab/kubernetes.nix",
+    "then": "kubernetes",
+    "when": "cluster_ready",
+    "how": "Nix renders pinned manifests; apply waits for a runtime cluster"
+  },
+  {
+    "id": "helm.external-dns",
+    "surface": "kubernetes",
+    "nix": "homelab/kubernetes.nix externalDnsChart",
+    "then": "helm",
+    "when": "cluster_ready",
+    "how": "helm template of the pinned chart; apply is a later playbook"
+  },
+  {
+    "id": "operator.cert-manager",
+    "surface": "operator",
+    "nix": "homelab/kubernetes.nix certManagerSource",
+    "then": "bash",
+    "when": "cluster_ready",
+    "how": "apply the Nix-fetched YAML; do not run an upstream install script"
+  },
+  {
+    "id": "operator.onepassword",
+    "surface": "operator",
+    "nix": "homelab/kubernetes.nix connectChart",
+    "then": "helm",
+    "when": "cluster_ready",
+    "how": "helm template of the pinned connect chart"
+  },
+  {
+    "id": "runtime.crio",
+    "surface": "container",
+    "nix": "linux-only",
+    "then": "crio",
+    "when": "linux_node",
+    "how": "not on this Darwin Mac; a Linux node must exist first"
+  },
+  {
+    "id": "cni.cilium",
+    "surface": "kubernetes",
+    "nix": "linux-only",
+    "then": "cilium",
+    "when": "linux_node",
+    "how": "CNI after a Linux cluster; OrbStack's CNI is not Cilium"
+  },
+  {
+    "id": "cloud.r2",
+    "surface": "cloud",
+    "nix": "none",
+    "then": "opentofu",
+    "when": "cloud_account",
+    "how": "OpenTofu owns the R2 bucket; Nix does not own the account"
+  }
+]

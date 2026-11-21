@@ -1,0 +1,1 @@
+../../.agents/teams/configure/agent.md

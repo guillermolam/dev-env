@@ -13,6 +13,7 @@ __pycache__/
 .DS_Store
 operations/.cache/
 .cache/
+.agents/runs/
 
 # Generated Pipelock policy. Not a reviewed project config.
 pipelock.yaml

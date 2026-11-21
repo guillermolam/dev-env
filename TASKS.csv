@@ -29,3 +29,6 @@ T24,tested-locally,Evidence-file collectors doctor.ready fixture E2E recovery-dr
 T25,tested-locally,restic in HM and flake packages check-recovery-prereqs.sh,Home Manager not activated; production env unset
 T26,proposed,OpenShell work-sandbox.md controller image requirements,operator approval and sandbox build
 T27,tested-live,bootstrap-local and scaffold-evidence on host,offsite 1Password env and real alert sources unset
+T30,specified,`.agents` teams for deploy provision configure maintain secure harden troubleshoot remediate; `make check-agents`,not an admitted workload; apply gate not built
+T31,fixture-tested,step-alert hook on postToolUse and subagentStop; planted secret stays out of alert and ledger,not observed firing inside a live Cursor session
+T32,tested,provision-plan.json and next_action gates; 10 unit tests; complexity max 3,homelab disabled; digests unpinned; no linux node; no cloud account; playbooks not applied

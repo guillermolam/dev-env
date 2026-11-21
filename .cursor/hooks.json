@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "python3 .cursor/hooks/step-alert.py postToolUse",
+        "timeout": 10
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "python3 .cursor/hooks/step-alert.py postToolUseFailure",
+        "timeout": 10
+      }
+    ],
+    "subagentStop": [
+      {
+        "command": "python3 .cursor/hooks/step-alert.py subagentStop",
+        "timeout": 10,
+        "loop_limit": 1
+      }
+    ]
+  }
+}

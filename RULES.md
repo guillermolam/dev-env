@@ -83,7 +83,10 @@ Passing a unit test does not mean a safeguard is installed.
 - Host OpenShell transport is limited to reviewed control-plane operations.
   A failed sandbox call must never trigger host execution as a fallback.
 - Keep agent runtime, gateway administration and host privileged operations
-  separate. Workloads cannot approve their own policy or attach providers.
+  separate. Workloads cannot widen their own policy or attach providers.
+- Platform teams proceed without asking. Wake the operator only for a fatal
+  error, a panic, a cyberattack, a data-integrity failure, or a fence drop.
+  See `.agents/shared/boundary.md`.
 - HOME discovery starts with metadata from a constrained trusted collector.
   Do not mount HOME or copy complete agent credential/config directories.
 - Inventory hooks, plugins, skills, MCP servers and autorun paths without

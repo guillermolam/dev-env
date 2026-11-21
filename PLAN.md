@@ -118,3 +118,17 @@ Existing Rego and deployment blockers remain open.
   certificate issuance, outage test, or recovery drill has run yet. The central
   homelab remains disabled until the required nonsecret configuration and
   immutable image digests are supplied.
+
+## Platform teams specified 2026-11-21
+
+`.agents/teams/` holds 21 specs for this mac-studio platform. They proceed
+without asking. They wake the operator only for a fatal error, a panic, a
+cyberattack, a data-integrity failure, or an OpenShell fence drop. The check
+is `make check-agents`. No generation was activated. The fail-closed apply
+gate is not built. Production apply stays disabled until real evidence,
+baseline, and backup destination exist.
+
+`.cursor/hooks.json` alerts the agent after every tool step and when a
+subagent stops. The fixture check proves the alert omits a planted secret.
+A live Cursor session has already delivered those alerts. The ledger under
+`.agents/runs/` is gitignored.

@@ -124,5 +124,6 @@
       };
 
       formatter.aarch64-darwin = pkgs.nixfmt;
+      provisionPlan = import ./homelab/provision-plan.nix { inherit (nixpkgs) lib; };
     };
 }
