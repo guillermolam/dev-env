@@ -36,4 +36,5 @@ jobs:
         run: bash "$RUNNER_HOME/agent-harness/skills/agent-harness/scripts/run-shipped-checkpoints.sh"
         env:
           RUNNER_HOME: ${{ runner.temp }}
-          HARNESS_RUNNER_REF: v1.10.0
+          # automated-assessment-skill ref (not agent-harness v1.10.0)
+          HARNESS_RUNNER_REF: main

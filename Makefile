@@ -1,7 +1,7 @@
 # --- Agent Harness Targets ---
 # See AGENTS.md for available commands.
 
-.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap prepare-controller-uploads goal-progress offsite-preflight rclone-r2 openshell-status openshell-provision openshell-start openshell-stop openshell-restart
+.PHONY: verify-harness harness-status check-recovery new-mac-bootstrap prepare-controller-uploads goal-progress doctor offsite-preflight rclone-r2 openshell-status openshell-provision openshell-start openshell-stop openshell-restart
 
 ## Verify harness consistency (docs, references, commands)
 verify-harness:
@@ -26,6 +26,10 @@ prepare-controller-uploads:
 ## Evidence-only recover-ready progress (no activation)
 goal-progress:
 	@sh scripts/goal-progress.sh
+
+## Doctor with evidence + local-restic env when present (no activation)
+doctor:
+	@sh scripts/doctor.sh
 
 ## Offsite compromise-ready preflight (rclone/netbird/repo scheme)
 offsite-preflight:

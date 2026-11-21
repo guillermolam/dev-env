@@ -31,8 +31,8 @@ operations/.cache/opa test operations/policy -v
 PYTHONPATH=operations MAC_ENV_OPA="$PWD/operations/.cache/opa" \
   operations/.cache/quality/bin/python -m unittest discover -s operations/tests -v
 
-# Readiness (does not mutate; does not create state dir)
-PYTHONPATH=operations MAC_ENV_OPA="$PWD/operations/.cache/opa" python3 -m mac_env doctor
+# Readiness (sources evidence + local-restic env when present)
+make doctor
 
 # Disposable backup/restore drill (needs restic; empty --workspace)
 nix build .#restic

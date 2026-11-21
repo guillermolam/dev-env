@@ -5,7 +5,12 @@
 #
 # The signed arm64 pkg installs /Applications/NetBird.app, links
 # /usr/local/bin/netbird, and its own postinstall registers the root daemon.
-{ pkgs, lib, homelab, ... }:
+{
+  pkgs,
+  lib,
+  homelab,
+  ...
+}:
 let
   netbird = import ../../homelab/netbird-package.nix { inherit pkgs; };
   inherit (netbird) version;

@@ -540,12 +540,12 @@ check_drift() {
         return
     fi
 
-    # Check if build/CI files changed in last commit
+    # Last commit plus staged index (so pre-commit can clear drift by updating AGENTS.md)
     local build_files_changed=false
     local agents_changed=false
 
-    while IFS= read -r changed_file; do
-        case "$changed_file" in
+    mark_drift_paths() {
+        case "$1" in
             Makefile|composer.json|package.json|.github/workflows/*|.gitlab-ci.yml|.forgejo/workflows/*|.gitea/workflows/*)
                 build_files_changed=true
                 ;;
@@ -553,7 +553,17 @@ check_drift() {
                 agents_changed=true
                 ;;
         esac
+    }
+
+    while IFS= read -r changed_file; do
+        [[ -n "$changed_file" ]] || continue
+        mark_drift_paths "$changed_file"
     done < <(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)
+
+    while IFS= read -r changed_file; do
+        [[ -n "$changed_file" ]] || continue
+        mark_drift_paths "$changed_file"
+    done < <(git diff --cached --name-only 2>/dev/null || true)
 
     if [[ "$build_files_changed" == true && "$agents_changed" == false ]]; then
         warn 3 "Potential drift: build/CI files changed in last commit but AGENTS.md was not updated"

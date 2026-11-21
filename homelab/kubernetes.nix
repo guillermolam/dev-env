@@ -1,4 +1,8 @@
-{ homelab, lib, pkgs }:
+{
+  homelab,
+  lib,
+  pkgs,
+}:
 let
   certManagerVersion = "1.21.3";
   externalDnsVersion = "1.24.0";
@@ -37,7 +41,9 @@ let
   certManager = pkgs.writeText "cert-manager.yaml" (
     builtins.replaceStrings
       (map (image: "quay.io/jetstack/${image}:v${certManagerVersion}") certManagerImages)
-      (lib.zipListsWith (image: digest: "quay.io/jetstack/${image}@sha256:${digest}") certManagerImages certManagerDigests)
+      (lib.zipListsWith (
+        image: digest: "quay.io/jetstack/${image}@sha256:${digest}"
+      ) certManagerImages certManagerDigests)
       (builtins.readFile certManagerSource)
   );
 
@@ -74,156 +80,183 @@ let
     };
   };
 
-  internalExternalDns = pkgs.runCommand "external-dns-internal.yaml"
-    {
-      nativeBuildInputs = [ pkgs.kubernetes-helm ];
-    } ''
-    helm template external-dns-internal ${externalDnsChart} \
-      --namespace homelab \
-      --include-crds \
-      --set-json values=${lib.escapeShellArg (builtins.toJSON (externalDnsValues // {
-        provider.name = "coredns";
-        env = [
-          {
-            name = "ETCD_URLS";
-            value = "https://${homelab.lanAddress}:2379";
-          }
-        ];
-        extraArgs = [
-          "--coredns-strictly-owned"
-          "--tls-ca=/etc/external-dns/etcd/ca.crt"
-          "--tls-client-cert=/etc/external-dns/etcd/tls.crt"
-          "--tls-client-cert-key=/etc/external-dns/etcd/tls.key"
-        ];
-        txtOwnerId = "orbstack-internal";
-        annotationFilter = "dev-env/visibility=internal";
-        domainFilters = [ homelab.internalZone ];
-        policy = "sync";
-        extraVolumes = [
-          {
-            name = "etcd-tls";
-            secret.secretName = "external-dns-etcd";
-          }
-        ];
-        extraVolumeMounts = [
-          {
-            name = "etcd-tls";
-            mountPath = "/etc/external-dns/etcd";
-            readOnly = true;
-          }
-        ];
-      }))} > "$out"
-  '';
+  internalExternalDns =
+    pkgs.runCommand "external-dns-internal.yaml"
+      {
+        nativeBuildInputs = [ pkgs.kubernetes-helm ];
+      }
+      ''
+        helm template external-dns-internal ${externalDnsChart} \
+          --namespace homelab \
+          --include-crds \
+          --set-json values=${
+            lib.escapeShellArg (
+              builtins.toJSON (
+                externalDnsValues
+                // {
+                  provider.name = "coredns";
+                  env = [
+                    {
+                      name = "ETCD_URLS";
+                      value = "https://${homelab.lanAddress}:2379";
+                    }
+                  ];
+                  extraArgs = [
+                    "--coredns-strictly-owned"
+                    "--tls-ca=/etc/external-dns/etcd/ca.crt"
+                    "--tls-client-cert=/etc/external-dns/etcd/tls.crt"
+                    "--tls-client-cert-key=/etc/external-dns/etcd/tls.key"
+                  ];
+                  txtOwnerId = "orbstack-internal";
+                  annotationFilter = "dev-env/visibility=internal";
+                  domainFilters = [ homelab.internalZone ];
+                  policy = "sync";
+                  extraVolumes = [
+                    {
+                      name = "etcd-tls";
+                      secret.secretName = "external-dns-etcd";
+                    }
+                  ];
+                  extraVolumeMounts = [
+                    {
+                      name = "etcd-tls";
+                      mountPath = "/etc/external-dns/etcd";
+                      readOnly = true;
+                    }
+                  ];
+                }
+              )
+            )
+          } > "$out"
+      '';
 
-  publicExternalDns = pkgs.runCommand "external-dns-cloudflare.yaml"
-    {
-      nativeBuildInputs = [ pkgs.kubernetes-helm ];
-    } ''
-    helm template external-dns-cloudflare ${externalDnsChart} \
-      --namespace homelab \
-      --set-json values=${lib.escapeShellArg (builtins.toJSON (externalDnsValues // {
-        provider.name = "cloudflare";
-        env = [
-          {
-            name = "CF_API_TOKEN";
-            valueFrom.secretKeyRef = {
-              name = "cloudflare-external-dns";
-              key = "token";
+  publicExternalDns =
+    pkgs.runCommand "external-dns-cloudflare.yaml"
+      {
+        nativeBuildInputs = [ pkgs.kubernetes-helm ];
+      }
+      ''
+        helm template external-dns-cloudflare ${externalDnsChart} \
+          --namespace homelab \
+          --set-json values=${
+            lib.escapeShellArg (
+              builtins.toJSON (
+                externalDnsValues
+                // {
+                  provider.name = "cloudflare";
+                  env = [
+                    {
+                      name = "CF_API_TOKEN";
+                      valueFrom.secretKeyRef = {
+                        name = "cloudflare-external-dns";
+                        key = "token";
+                      };
+                    }
+                  ];
+                  txtOwnerId = "orbstack-cloudflare";
+                  annotationFilter = "dev-env/visibility=public";
+                  domainFilters = [ homelab.cloudflare.zone ];
+                  policy = "upsert-only";
+                }
+              )
+            )
+          } > "$out"
+      '';
+
+  onePassword =
+    pkgs.runCommand "onepassword-operator.yaml"
+      {
+        nativeBuildInputs = [ pkgs.kubernetes-helm ];
+      }
+      ''
+        helm template onepassword ${connectChart} \
+          --namespace onepassword \
+          --set-json values=${
+            lib.escapeShellArg (
+              builtins.toJSON {
+                connect = {
+                  create = false;
+                  host = homelab.onePassword.connectHost;
+                };
+                operator = {
+                  create = true;
+                  authMethod = "connect";
+                  autoRestart = false;
+                  logLevel = "info";
+                  pollingInterval = 600;
+                  version = "1.12.1@sha256:${homelab.imageDigests.operator}";
+                  watchNamespace = [
+                    "homelab"
+                    "cert-manager"
+                  ]
+                  ++ lib.optional homelab.runtimes.netbird "netbird";
+                };
+                acceptanceTests.enabled = false;
+              }
+            )
+          } > "$out"
+      '';
+
+  pki = pkgs.writeText "openbao-issuer.json" (
+    builtins.toJSON {
+      apiVersion = "v1";
+      kind = "List";
+      items = [
+        {
+          apiVersion = "cert-manager.io/v1";
+          kind = "ClusterIssuer";
+          metadata.name = "openbao-intermediate";
+          spec.vault = {
+            server = "https://bao.${homelab.internalZone}:8200";
+            path = "pki_int/sign/cert-manager";
+            caBundleSecretRef = {
+              name = "openbao-ca";
+              key = "ca.crt";
             };
-          }
-        ];
-        txtOwnerId = "orbstack-cloudflare";
-        annotationFilter = "dev-env/visibility=public";
-        domainFilters = [ homelab.cloudflare.zone ];
-        policy = "upsert-only";
-      }))} > "$out"
-  '';
-
-  onePassword = pkgs.runCommand "onepassword-operator.yaml"
-    {
-      nativeBuildInputs = [ pkgs.kubernetes-helm ];
-    } ''
-    helm template onepassword ${connectChart} \
-      --namespace onepassword \
-      --set-json values=${lib.escapeShellArg (builtins.toJSON {
-        connect = {
-          create = false;
-          host = homelab.onePassword.connectHost;
-        };
-        operator = {
-          create = true;
-          authMethod = "connect";
-          autoRestart = false;
-          logLevel = "info";
-          pollingInterval = 600;
-          version = "1.12.1@sha256:${homelab.imageDigests.operator}";
-          watchNamespace = [
-            "homelab"
-            "cert-manager"
-          ] ++ lib.optional homelab.runtimes.netbird "netbird";
-        };
-        acceptanceTests.enabled = false;
-      })} > "$out"
-  '';
-
-  pki = pkgs.writeText "openbao-issuer.json" (builtins.toJSON {
-    apiVersion = "v1";
-    kind = "List";
-    items = [
-      {
-        apiVersion = "cert-manager.io/v1";
-        kind = "ClusterIssuer";
-        metadata.name = "openbao-intermediate";
-        spec.vault = {
-          server = "https://bao.${homelab.internalZone}:8200";
-          path = "pki_int/sign/cert-manager";
-          caBundleSecretRef = {
-            name = "openbao-ca";
-            key = "ca.crt";
-          };
-          auth.appRole = {
-            path = "approle";
-            roleId = homelab.openbao.certManagerRoleId;
-            secretRef = {
-              name = "openbao-cert-manager-approle";
-              key = "secretId";
+            auth.appRole = {
+              path = "approle";
+              roleId = homelab.openbao.certManagerRoleId;
+              secretRef = {
+                name = "openbao-cert-manager-approle";
+                key = "secretId";
+              };
             };
           };
-        };
-      }
-      {
-        apiVersion = "onepassword.com/v1";
-        kind = "OnePasswordItem";
-        metadata = {
-          name = "openbao-cert-manager-approle";
-          namespace = "cert-manager";
-        };
-        spec.itemPath = homelab.onePassword.certManagerSecretItem;
-      }
-    ];
-  });
+        }
+        {
+          apiVersion = "onepassword.com/v1";
+          kind = "OnePasswordItem";
+          metadata = {
+            name = "openbao-cert-manager-approle";
+            namespace = "cert-manager";
+          };
+          spec.itemPath = homelab.onePassword.certManagerSecretItem;
+        }
+      ];
+    }
+  );
 
-  cloudflareSecret = pkgs.writeText "cloudflare-secret.json" (builtins.toJSON {
-    apiVersion = "onepassword.com/v1";
-    kind = "OnePasswordItem";
-    metadata = {
-      name = "cloudflare-external-dns";
-      namespace = "homelab";
-    };
-    spec.itemPath = homelab.cloudflare.tokenItem;
-  });
+  cloudflareSecret = pkgs.writeText "cloudflare-secret.json" (
+    builtins.toJSON {
+      apiVersion = "onepassword.com/v1";
+      kind = "OnePasswordItem";
+      metadata = {
+        name = "cloudflare-external-dns";
+        namespace = "homelab";
+      };
+      spec.itemPath = homelab.cloudflare.tokenItem;
+    }
+  );
 
-  serviceEndpoints =
-    homelab.services
-    ++ [
-      {
-        name = "openbao";
-        internalName = "bao.${homelab.internalZone}";
-        internalTargets = [ homelab.lanAddress ];
-        publicName = null;
-        publicTargets = [ ];
-      }
-    ];
+  serviceEndpoints = homelab.services ++ [
+    {
+      name = "openbao";
+      internalName = "bao.${homelab.internalZone}";
+      internalTargets = [ homelab.lanAddress ];
+      publicName = null;
+      publicTargets = [ ];
+    }
+  ];
   endpointFor =
     visibility: service:
     let
@@ -248,11 +281,13 @@ let
     };
   internalEndpoints = map (endpointFor "internal") serviceEndpoints;
   publicEndpoints = lib.filter (service: service.publicName != null) serviceEndpoints;
-  endpoints = pkgs.writeText "dns-endpoints.json" (builtins.toJSON {
-    apiVersion = "v1";
-    kind = "List";
-    items = internalEndpoints ++ map (endpointFor "public") publicEndpoints;
-  });
+  endpoints = pkgs.writeText "dns-endpoints.json" (
+    builtins.toJSON {
+      apiVersion = "v1";
+      kind = "List";
+      items = internalEndpoints ++ map (endpointFor "public") publicEndpoints;
+    }
+  );
 
   netbirdServer =
     if homelab.runtimes.netbird then
@@ -260,18 +295,23 @@ let
     else
       null;
 
-  namespaces = pkgs.writeText "namespaces.json" (builtins.toJSON {
-    apiVersion = "v1";
-    kind = "List";
-    items = map (name: {
+  namespaces = pkgs.writeText "namespaces.json" (
+    builtins.toJSON {
       apiVersion = "v1";
-      kind = "Namespace";
-      metadata.name = name;
-    }) [
-      "homelab"
-      "onepassword"
-    ];
-  });
+      kind = "List";
+      items =
+        map
+          (name: {
+            apiVersion = "v1";
+            kind = "Namespace";
+            metadata.name = name;
+          })
+          [
+            "homelab"
+            "onepassword"
+          ];
+    }
+  );
 in
 pkgs.runCommand "homelab-kubernetes" { } ''
   mkdir -p "$out"

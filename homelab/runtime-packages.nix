@@ -31,7 +31,14 @@ let
       ln -s ${pkgs.vfkit}/bin/vfkit "$out/libexec/podman/vfkit"
       makeWrapper ${pkgs.openssh}/bin/ssh "$out/bin/ssh" --add-flags "-F /dev/null"
       wrapProgram "$out/bin/podman" \
-        --prefix PATH : "$out/bin:${lib.makeBinPath [ pkgs.gvproxy pkgs.krunkit pkgs.openssh pkgs.vfkit ]}"
+        --prefix PATH : "$out/bin:${
+          lib.makeBinPath [
+            pkgs.gvproxy
+            pkgs.krunkit
+            pkgs.openssh
+            pkgs.vfkit
+          ]
+        }"
       runHook postInstall
     '';
 
@@ -68,7 +75,12 @@ let
       makeWrapper \
         "$out/Applications/Podman Desktop.app/Contents/MacOS/Podman Desktop" \
         "$out/bin/podman-desktop" \
-        --prefix PATH : ${lib.makeBinPath [ podman pkgs.krunkit ]}
+        --prefix PATH : ${
+          lib.makeBinPath [
+            podman
+            pkgs.krunkit
+          ]
+        }
       runHook postInstall
     '';
 

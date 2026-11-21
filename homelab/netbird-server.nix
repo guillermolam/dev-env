@@ -13,10 +13,15 @@
 #   sha256:f6acc1a6dcb48d10b867ec7e6916c62ef5c8dc2bb198aec9cc637b2dd26c06c9.
 #   A later 0.83.2 tag exists; it is not used, because the macOS client pin is
 #   0.83.1. The operator still supplies that digest in homelab.imageDigests.
-{ homelab, lib, pkgs }:
+{
+  homelab,
+  lib,
+  pkgs,
+}:
 let
   url = homelab.netbird.managementUrl;
-  require = name: value:
+  require =
+    name: value:
     if value == null || value == "" then
       throw "dev-env: ${name} is required to render the NetBird server"
     else
@@ -69,389 +74,397 @@ let
     };
   };
 in
-pkgs.writeText "netbird.json" (builtins.toJSON {
-  apiVersion = "v1";
-  kind = "List";
-  items = [
-    {
-      apiVersion = "v1";
-      kind = "Namespace";
-      metadata.name = "netbird";
-    }
-    {
-      apiVersion = "onepassword.com/v1";
-      kind = "OnePasswordItem";
-      metadata = {
-        name = "netbird-credentials";
-        namespace = "netbird";
-      };
-      spec.itemPath = credentialsItem;
-    }
-    {
-      apiVersion = "v1";
-      kind = "PersistentVolumeClaim";
-      metadata = {
-        name = "netbird-data";
-        namespace = "netbird";
-      };
-      spec = {
-        accessModes = [ "ReadWriteOnce" ];
-        resources.requests.storage = "1Gi";
-      };
-    }
-    {
-      apiVersion = "v1";
-      kind = "ConfigMap";
-      metadata = {
-        name = "netbird-config";
-        namespace = "netbird";
-      };
-      data."config.yaml" = builtins.readFile serverConfig;
-    }
-    {
-      apiVersion = "apps/v1";
-      kind = "Deployment";
-      metadata = {
-        name = "netbird-server";
-        namespace = "netbird";
-      };
-      spec = {
-        replicas = 1;
-        strategy.type = "Recreate";
-        selector.matchLabels."app.kubernetes.io/name" = "netbird-server";
-        template = {
-          metadata.labels."app.kubernetes.io/name" = "netbird-server";
-          spec.containers = [
-            {
-              name = "netbird-server";
-              image = "netbirdio/netbird-server@sha256:${serverDigest}";
-              imagePullPolicy = "IfNotPresent";
-              args = [
-                "--config"
-                "/etc/netbird/config.yaml"
-              ];
-              ports = [
-                {
-                  name = "http";
-                  containerPort = 80;
-                }
-                {
-                  name = "metrics";
-                  containerPort = 9090;
-                }
-                {
-                  name = "health";
-                  containerPort = 9000;
-                }
-                {
-                  name = "stun";
-                  containerPort = 3478;
-                  protocol = "UDP";
-                  hostPort = 3478;
-                }
-              ];
-              env = [
-                (secretEnv "NB_AUTH_SECRET" "relay-auth-secret")
-                (secretEnv "NB_STORE_ENCRYPTION_KEY" "datastore-encryption-key")
-                (secretEnv "NB_IDP_SESSION_COOKIE_ENCRYPTION_KEY" "idp-session-cookie-encryption-key")
-              ];
-              readinessProbe = {
-                httpGet = {
-                  path = "/health";
-                  port = 9000;
-                };
-                initialDelaySeconds = 5;
-                periodSeconds = 5;
-              };
-              livenessProbe = {
-                httpGet = {
-                  path = "/health";
-                  port = 9000;
-                };
-                initialDelaySeconds = 15;
-                periodSeconds = 10;
-              };
-              volumeMounts = [
-                {
-                  name = "config";
-                  mountPath = "/etc/netbird/config.yaml";
-                  subPath = "config.yaml";
-                  readOnly = true;
-                }
-                {
-                  name = "data";
-                  mountPath = "/var/lib/netbird";
-                }
-              ];
-            }
-          ];
-          volumes = [
-            {
-              name = "config";
-              configMap.name = "netbird-config";
-            }
-            {
-              name = "data";
-              persistentVolumeClaim.claimName = "netbird-data";
-            }
-          ];
+pkgs.writeText "netbird.json" (
+  builtins.toJSON {
+    apiVersion = "v1";
+    kind = "List";
+    items = [
+      {
+        apiVersion = "v1";
+        kind = "Namespace";
+        metadata.name = "netbird";
+      }
+      {
+        apiVersion = "onepassword.com/v1";
+        kind = "OnePasswordItem";
+        metadata = {
+          name = "netbird-credentials";
+          namespace = "netbird";
         };
-      };
-    }
-    {
-      apiVersion = "v1";
-      kind = "Service";
-      metadata = {
-        name = "netbird-server";
-        namespace = "netbird";
-      };
-      spec = {
-        selector."app.kubernetes.io/name" = "netbird-server";
-        ports = [
-          {
-            name = "http";
-            port = 80;
-            targetPort = 80;
-            appProtocol = "kubernetes.io/h2c";
-          }
-        ];
-      };
-    }
-    {
-      apiVersion = "v1";
-      kind = "Service";
-      metadata = {
-        name = "netbird-stun";
-        namespace = "netbird";
-      };
-      spec = {
-        type = "LoadBalancer";
-        externalTrafficPolicy = "Local";
-        selector."app.kubernetes.io/name" = "netbird-server";
-        ports = [
-          {
-            name = "stun";
-            protocol = "UDP";
-            port = 3478;
-            targetPort = 3478;
-          }
-        ];
-      };
-    }
-    {
-      apiVersion = "apps/v1";
-      kind = "Deployment";
-      metadata = {
-        name = "netbird-dashboard";
-        namespace = "netbird";
-      };
-      spec = {
-        replicas = 1;
-        selector.matchLabels."app.kubernetes.io/name" = "netbird-dashboard";
-        template = {
-          metadata.labels."app.kubernetes.io/name" = "netbird-dashboard";
-          spec.containers = [
-            {
-              name = "dashboard";
-              image = "netbirdio/dashboard@sha256:${dashboardDigest}";
-              imagePullPolicy = "IfNotPresent";
-              ports = [
-                {
-                  name = "http";
-                  containerPort = 80;
-                }
-              ];
-              env = [
-                {
-                  name = "NETBIRD_MGMT_API_ENDPOINT";
-                  value = managementUrl;
-                }
-                {
-                  name = "NETBIRD_MGMT_GRPC_API_ENDPOINT";
-                  value = managementUrl;
-                }
-                {
-                  name = "AUTH_AUDIENCE";
-                  value = "netbird-dashboard";
-                }
-                {
-                  name = "AUTH_CLIENT_ID";
-                  value = "netbird-dashboard";
-                }
-                {
-                  name = "AUTH_CLIENT_SECRET";
-                  value = "";
-                }
-                {
-                  name = "AUTH_AUTHORITY";
-                  value = "${managementUrl}/oauth2";
-                }
-                {
-                  name = "USE_AUTH0";
-                  value = "false";
-                }
-                {
-                  name = "AUTH_SUPPORTED_SCOPES";
-                  value = "openid profile email groups";
-                }
-                {
-                  name = "AUTH_REDIRECT_URI";
-                  value = "/nb-auth";
-                }
-                {
-                  name = "AUTH_SILENT_REDIRECT_URI";
-                  value = "/nb-silent-auth";
-                }
-                {
-                  name = "LETSENCRYPT_DOMAIN";
-                  value = "none";
-                }
-              ];
-              readinessProbe = {
-                httpGet = {
-                  path = "/";
-                  port = 80;
-                };
-                initialDelaySeconds = 5;
-                periodSeconds = 5;
-              };
-              livenessProbe = {
-                httpGet = {
-                  path = "/";
-                  port = 80;
-                };
-                initialDelaySeconds = 10;
-                periodSeconds = 10;
-              };
-            }
-          ];
+        spec.itemPath = credentialsItem;
+      }
+      {
+        apiVersion = "v1";
+        kind = "PersistentVolumeClaim";
+        metadata = {
+          name = "netbird-data";
+          namespace = "netbird";
         };
-      };
-    }
-    {
-      apiVersion = "v1";
-      kind = "Service";
-      metadata = {
-        name = "netbird-dashboard";
-        namespace = "netbird";
-      };
-      spec = {
-        selector."app.kubernetes.io/name" = "netbird-dashboard";
-        ports = [
-          {
-            name = "http";
-            port = 80;
-            targetPort = 80;
-          }
-        ];
-      };
-    }
-    {
-      apiVersion = "networking.k8s.io/v1";
-      kind = "Ingress";
-      metadata = {
-        name = "netbird-grpc";
-        namespace = "netbird";
-        annotations = {
-          "cert-manager.io/cluster-issuer" = "openbao-intermediate";
-          "traefik.ingress.kubernetes.io/service.serversscheme" = "h2c";
+        spec = {
+          accessModes = [ "ReadWriteOnce" ];
+          resources.requests.storage = "1Gi";
         };
-      };
-      spec = {
-        ingressClassName = "traefik";
-        rules = [
-          {
-            host = host;
-            http.paths = map (path: {
-              inherit path;
-              pathType = "Prefix";
-              backend.service = {
-                name = "netbird-server";
-                port.number = 80;
-              };
-            }) [
-              "/signalexchange.SignalExchange/"
-              "/management.ManagementService/"
-              "/management.ProxyService/"
-            ];
-          }
-        ];
-        tls = [
-          {
-            hosts = [ host ];
-            secretName = "netbird-tls";
-          }
-        ];
-      };
-    }
-    {
-      apiVersion = "networking.k8s.io/v1";
-      kind = "Ingress";
-      metadata = {
-        name = "netbird-http";
-        namespace = "netbird";
-        annotations."cert-manager.io/cluster-issuer" = "openbao-intermediate";
-      };
-      spec = {
-        ingressClassName = "traefik";
-        rules = [
-          {
-            host = host;
-            http.paths = map (path: {
-              inherit path;
-              pathType = "Prefix";
-              backend.service = {
-                name = "netbird-server";
-                port.number = 80;
-              };
-            }) [
-              "/api"
-              "/oauth2"
-              "/relay"
-              "/ws-proxy/"
-            ];
-          }
-        ];
-        tls = [
-          {
-            hosts = [ host ];
-            secretName = "netbird-tls";
-          }
-        ];
-      };
-    }
-    {
-      apiVersion = "networking.k8s.io/v1";
-      kind = "Ingress";
-      metadata = {
-        name = "netbird-dashboard";
-        namespace = "netbird";
-        annotations."cert-manager.io/cluster-issuer" = "openbao-intermediate";
-      };
-      spec = {
-        ingressClassName = "traefik";
-        rules = [
-          {
-            host = host;
-            http.paths = [
+      }
+      {
+        apiVersion = "v1";
+        kind = "ConfigMap";
+        metadata = {
+          name = "netbird-config";
+          namespace = "netbird";
+        };
+        data."config.yaml" = builtins.readFile serverConfig;
+      }
+      {
+        apiVersion = "apps/v1";
+        kind = "Deployment";
+        metadata = {
+          name = "netbird-server";
+          namespace = "netbird";
+        };
+        spec = {
+          replicas = 1;
+          strategy.type = "Recreate";
+          selector.matchLabels."app.kubernetes.io/name" = "netbird-server";
+          template = {
+            metadata.labels."app.kubernetes.io/name" = "netbird-server";
+            spec.containers = [
               {
-                path = "/";
-                pathType = "Prefix";
-                backend.service = {
-                  name = "netbird-dashboard";
-                  port.number = 80;
+                name = "netbird-server";
+                image = "netbirdio/netbird-server@sha256:${serverDigest}";
+                imagePullPolicy = "IfNotPresent";
+                args = [
+                  "--config"
+                  "/etc/netbird/config.yaml"
+                ];
+                ports = [
+                  {
+                    name = "http";
+                    containerPort = 80;
+                  }
+                  {
+                    name = "metrics";
+                    containerPort = 9090;
+                  }
+                  {
+                    name = "health";
+                    containerPort = 9000;
+                  }
+                  {
+                    name = "stun";
+                    containerPort = 3478;
+                    protocol = "UDP";
+                    hostPort = 3478;
+                  }
+                ];
+                env = [
+                  (secretEnv "NB_AUTH_SECRET" "relay-auth-secret")
+                  (secretEnv "NB_STORE_ENCRYPTION_KEY" "datastore-encryption-key")
+                  (secretEnv "NB_IDP_SESSION_COOKIE_ENCRYPTION_KEY" "idp-session-cookie-encryption-key")
+                ];
+                readinessProbe = {
+                  httpGet = {
+                    path = "/health";
+                    port = 9000;
+                  };
+                  initialDelaySeconds = 5;
+                  periodSeconds = 5;
+                };
+                livenessProbe = {
+                  httpGet = {
+                    path = "/health";
+                    port = 9000;
+                  };
+                  initialDelaySeconds = 15;
+                  periodSeconds = 10;
+                };
+                volumeMounts = [
+                  {
+                    name = "config";
+                    mountPath = "/etc/netbird/config.yaml";
+                    subPath = "config.yaml";
+                    readOnly = true;
+                  }
+                  {
+                    name = "data";
+                    mountPath = "/var/lib/netbird";
+                  }
+                ];
+              }
+            ];
+            volumes = [
+              {
+                name = "config";
+                configMap.name = "netbird-config";
+              }
+              {
+                name = "data";
+                persistentVolumeClaim.claimName = "netbird-data";
+              }
+            ];
+          };
+        };
+      }
+      {
+        apiVersion = "v1";
+        kind = "Service";
+        metadata = {
+          name = "netbird-server";
+          namespace = "netbird";
+        };
+        spec = {
+          selector."app.kubernetes.io/name" = "netbird-server";
+          ports = [
+            {
+              name = "http";
+              port = 80;
+              targetPort = 80;
+              appProtocol = "kubernetes.io/h2c";
+            }
+          ];
+        };
+      }
+      {
+        apiVersion = "v1";
+        kind = "Service";
+        metadata = {
+          name = "netbird-stun";
+          namespace = "netbird";
+        };
+        spec = {
+          type = "LoadBalancer";
+          externalTrafficPolicy = "Local";
+          selector."app.kubernetes.io/name" = "netbird-server";
+          ports = [
+            {
+              name = "stun";
+              protocol = "UDP";
+              port = 3478;
+              targetPort = 3478;
+            }
+          ];
+        };
+      }
+      {
+        apiVersion = "apps/v1";
+        kind = "Deployment";
+        metadata = {
+          name = "netbird-dashboard";
+          namespace = "netbird";
+        };
+        spec = {
+          replicas = 1;
+          selector.matchLabels."app.kubernetes.io/name" = "netbird-dashboard";
+          template = {
+            metadata.labels."app.kubernetes.io/name" = "netbird-dashboard";
+            spec.containers = [
+              {
+                name = "dashboard";
+                image = "netbirdio/dashboard@sha256:${dashboardDigest}";
+                imagePullPolicy = "IfNotPresent";
+                ports = [
+                  {
+                    name = "http";
+                    containerPort = 80;
+                  }
+                ];
+                env = [
+                  {
+                    name = "NETBIRD_MGMT_API_ENDPOINT";
+                    value = managementUrl;
+                  }
+                  {
+                    name = "NETBIRD_MGMT_GRPC_API_ENDPOINT";
+                    value = managementUrl;
+                  }
+                  {
+                    name = "AUTH_AUDIENCE";
+                    value = "netbird-dashboard";
+                  }
+                  {
+                    name = "AUTH_CLIENT_ID";
+                    value = "netbird-dashboard";
+                  }
+                  {
+                    name = "AUTH_CLIENT_SECRET";
+                    value = "";
+                  }
+                  {
+                    name = "AUTH_AUTHORITY";
+                    value = "${managementUrl}/oauth2";
+                  }
+                  {
+                    name = "USE_AUTH0";
+                    value = "false";
+                  }
+                  {
+                    name = "AUTH_SUPPORTED_SCOPES";
+                    value = "openid profile email groups";
+                  }
+                  {
+                    name = "AUTH_REDIRECT_URI";
+                    value = "/nb-auth";
+                  }
+                  {
+                    name = "AUTH_SILENT_REDIRECT_URI";
+                    value = "/nb-silent-auth";
+                  }
+                  {
+                    name = "LETSENCRYPT_DOMAIN";
+                    value = "none";
+                  }
+                ];
+                readinessProbe = {
+                  httpGet = {
+                    path = "/";
+                    port = 80;
+                  };
+                  initialDelaySeconds = 5;
+                  periodSeconds = 5;
+                };
+                livenessProbe = {
+                  httpGet = {
+                    path = "/";
+                    port = 80;
+                  };
+                  initialDelaySeconds = 10;
+                  periodSeconds = 10;
                 };
               }
             ];
-          }
-        ];
-        tls = [
-          {
-            hosts = [ host ];
-            secretName = "netbird-tls";
-          }
-        ];
-      };
-    }
-  ];
-})
+          };
+        };
+      }
+      {
+        apiVersion = "v1";
+        kind = "Service";
+        metadata = {
+          name = "netbird-dashboard";
+          namespace = "netbird";
+        };
+        spec = {
+          selector."app.kubernetes.io/name" = "netbird-dashboard";
+          ports = [
+            {
+              name = "http";
+              port = 80;
+              targetPort = 80;
+            }
+          ];
+        };
+      }
+      {
+        apiVersion = "networking.k8s.io/v1";
+        kind = "Ingress";
+        metadata = {
+          name = "netbird-grpc";
+          namespace = "netbird";
+          annotations = {
+            "cert-manager.io/cluster-issuer" = "openbao-intermediate";
+            "traefik.ingress.kubernetes.io/service.serversscheme" = "h2c";
+          };
+        };
+        spec = {
+          ingressClassName = "traefik";
+          rules = [
+            {
+              host = host;
+              http.paths =
+                map
+                  (path: {
+                    inherit path;
+                    pathType = "Prefix";
+                    backend.service = {
+                      name = "netbird-server";
+                      port.number = 80;
+                    };
+                  })
+                  [
+                    "/signalexchange.SignalExchange/"
+                    "/management.ManagementService/"
+                    "/management.ProxyService/"
+                  ];
+            }
+          ];
+          tls = [
+            {
+              hosts = [ host ];
+              secretName = "netbird-tls";
+            }
+          ];
+        };
+      }
+      {
+        apiVersion = "networking.k8s.io/v1";
+        kind = "Ingress";
+        metadata = {
+          name = "netbird-http";
+          namespace = "netbird";
+          annotations."cert-manager.io/cluster-issuer" = "openbao-intermediate";
+        };
+        spec = {
+          ingressClassName = "traefik";
+          rules = [
+            {
+              host = host;
+              http.paths =
+                map
+                  (path: {
+                    inherit path;
+                    pathType = "Prefix";
+                    backend.service = {
+                      name = "netbird-server";
+                      port.number = 80;
+                    };
+                  })
+                  [
+                    "/api"
+                    "/oauth2"
+                    "/relay"
+                    "/ws-proxy/"
+                  ];
+            }
+          ];
+          tls = [
+            {
+              hosts = [ host ];
+              secretName = "netbird-tls";
+            }
+          ];
+        };
+      }
+      {
+        apiVersion = "networking.k8s.io/v1";
+        kind = "Ingress";
+        metadata = {
+          name = "netbird-dashboard";
+          namespace = "netbird";
+          annotations."cert-manager.io/cluster-issuer" = "openbao-intermediate";
+        };
+        spec = {
+          ingressClassName = "traefik";
+          rules = [
+            {
+              host = host;
+              http.paths = [
+                {
+                  path = "/";
+                  pathType = "Prefix";
+                  backend.service = {
+                    name = "netbird-dashboard";
+                    port.number = 80;
+                  };
+                }
+              ];
+            }
+          ];
+          tls = [
+            {
+              hosts = [ host ];
+              secretName = "netbird-tls";
+            }
+          ];
+        };
+      }
+    ];
+  }
+)

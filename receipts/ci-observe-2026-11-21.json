@@ -1,1 +1,28 @@
-{"event":"ci-observe","date":"2026-11-21","branch":"nix-darwin-mac-studio","last_green_nix_ci":"2026-11-06","harness_workflows_on_remote":false,"note":"Harness YAML exists locally untracked/unpushed; push required for harness-verify CI."}
+{
+  "recorded_at": "2026-11-21T19:57:14Z",
+  "branch": "nix-darwin-mac-studio",
+  "observed_via": "gh run list",
+  "runs": [
+    {
+      "workflow": "Harness Verification",
+      "conclusion": "success",
+      "id": 44943663098
+    },
+    {
+      "workflow": "Shipped Checkpoints",
+      "conclusion": "failure",
+      "id": 44943663112,
+      "root_cause": "HARNESS_RUNNER_REF=v1.10.0 resolved against automated-assessment-skill (tag missing); pin must be assessment skill ref (main)"
+    },
+    {
+      "workflow": "nix",
+      "conclusion": "in_progress_or_prior_failure",
+      "note": "44943663095 in_progress at observe; prior 44941370323 failed"
+    }
+  ],
+  "fix_pending_push": [
+    ".github/workflows/harness-checkpoints.yml HARNESS_RUNNER_REF=main",
+    "nixfmt on hosts/home/homelab modules (Check formatting failed)"
+  ],
+  "controller_tests_job": "success on 44943663095"
+}

@@ -161,143 +161,145 @@ in
   config = lib.mkMerge [
     {
       assertions = [
-    {
-      assertion = homelab.enable -> homelab.lanAddress != null;
-      message = "homelab.lanAddress is required when homelab.enable is true.";
-    }
-    {
-      assertion = homelab.enable -> homelab.onePassword.enable;
-      message = "The homelab integrations require the reviewed 1Password configuration.";
-    }
-    {
-      assertion = homelab.cloudflare.enable -> homelab.cloudflare.zone != null;
-      message = "Cloudflare ExternalDNS requires a public zone.";
-    }
-    {
-      assertion = homelab.cloudflare.enable -> homelab.cloudflare.tokenItem != null;
-      message = "Cloudflare ExternalDNS requires a 1Password item reference, not a token.";
-    }
-    {
-      assertion = homelab.enable -> homelab.onePassword.connectHost != null;
-      message = "A 1Password Connect host is required for the homelab.";
-    }
-    {
-      assertion = homelab.enable -> homelab.onePassword.certManagerSecretItem != null;
-      message = "The cert-manager AppRole SecretID needs a 1Password item reference.";
-    }
-    {
-      assertion = homelab.enable -> homelab.openbao.certManagerRoleId != null;
-      message = "The cert-manager OpenBao AppRole RoleID is required.";
-    }
-    {
-      assertion = homelab.enable -> lib.all (value: value != null) [
-        homelab.imageDigests.certManagerController
-        homelab.imageDigests.certManagerWebhook
-        homelab.imageDigests.certManagerCainjector
-        homelab.imageDigests.certManagerAcmesolver
-        homelab.imageDigests.certManagerStartupapicheck
-        homelab.imageDigests.externalDns
-        homelab.imageDigests.operator
+        {
+          assertion = homelab.enable -> homelab.lanAddress != null;
+          message = "homelab.lanAddress is required when homelab.enable is true.";
+        }
+        {
+          assertion = homelab.enable -> homelab.onePassword.enable;
+          message = "The homelab integrations require the reviewed 1Password configuration.";
+        }
+        {
+          assertion = homelab.cloudflare.enable -> homelab.cloudflare.zone != null;
+          message = "Cloudflare ExternalDNS requires a public zone.";
+        }
+        {
+          assertion = homelab.cloudflare.enable -> homelab.cloudflare.tokenItem != null;
+          message = "Cloudflare ExternalDNS requires a 1Password item reference, not a token.";
+        }
+        {
+          assertion = homelab.enable -> homelab.onePassword.connectHost != null;
+          message = "A 1Password Connect host is required for the homelab.";
+        }
+        {
+          assertion = homelab.enable -> homelab.onePassword.certManagerSecretItem != null;
+          message = "The cert-manager AppRole SecretID needs a 1Password item reference.";
+        }
+        {
+          assertion = homelab.enable -> homelab.openbao.certManagerRoleId != null;
+          message = "The cert-manager OpenBao AppRole RoleID is required.";
+        }
+        {
+          assertion =
+            homelab.enable
+            -> lib.all (value: value != null) [
+              homelab.imageDigests.certManagerController
+              homelab.imageDigests.certManagerWebhook
+              homelab.imageDigests.certManagerCainjector
+              homelab.imageDigests.certManagerAcmesolver
+              homelab.imageDigests.certManagerStartupapicheck
+              homelab.imageDigests.externalDns
+              homelab.imageDigests.operator
+            ];
+          message = "All Kubernetes image digests must be pinned before enabling the homelab.";
+        }
+        {
+          assertion = homelab.runtimes.netbird -> homelab.netbird.credentialsItem != null;
+          message = "The NetBird server needs a 1Password item reference, not inline secrets.";
+        }
+        {
+          assertion = homelab.runtimes.netbird -> homelab.netbird.trustedProxyCIDRs != [ ];
+          message = "NetBird trustedProxyCIDRs must name the reverse-proxy CIDRs before the server is rendered.";
+        }
+        {
+          assertion =
+            homelab.runtimes.netbird
+            -> homelab.imageDigests.netbirdServer != null && homelab.imageDigests.netbirdDashboard != null;
+          message = "Pin netbirdServer and netbirdDashboard image digests before enabling the NetBird runtime.";
+        }
       ];
-      message = "All Kubernetes image digests must be pinned before enabling the homelab.";
-    }
-    {
-      assertion = homelab.runtimes.netbird -> homelab.netbird.credentialsItem != null;
-      message = "The NetBird server needs a 1Password item reference, not inline secrets.";
-    }
-    {
-      assertion = homelab.runtimes.netbird -> homelab.netbird.trustedProxyCIDRs != [ ];
-      message = "NetBird trustedProxyCIDRs must name the reverse-proxy CIDRs before the server is rendered.";
-    }
-    {
-      assertion =
-        homelab.runtimes.netbird -> homelab.imageDigests.netbirdServer != null
-        && homelab.imageDigests.netbirdDashboard != null;
-      message = "Pin netbirdServer and netbirdDashboard image digests before enabling the NetBird runtime.";
-    }
-  ];
 
-  environment.systemPackages = lib.optionals homelab.enable [
-    pkgs.coredns
-    pkgs.etcd
-    pkgs.kubectl
-    pkgs.kubernetes-helm
-    pkgs.openbao
-  ];
+      environment.systemPackages = lib.optionals homelab.enable [
+        pkgs.coredns
+        pkgs.etcd
+        pkgs.kubectl
+        pkgs.kubernetes-helm
+        pkgs.openbao
+      ];
 
     }
     (lib.mkIf homelab.enable {
-    environment.etc."mac-environment/kubernetes".source = kubernetesManifests;
-    users.knownGroups = [
-      "_etcd"
-      "_openbao"
-    ];
-    users.groups._etcd.gid = 790;
-    users.groups._openbao.gid = 791;
-    users.knownUsers = [
-      "_etcd"
-      "_openbao"
-    ];
-    users.users._etcd = {
-      uid = 790;
-      gid = 790;
-      home = etcdState;
-      description = "dev-env etcd service";
-    };
-    users.users._openbao = {
-      uid = 791;
-      gid = 791;
-      home = openbaoState;
-      description = "dev-env OpenBao service";
-    };
-
-    system.activationScripts.users.text = lib.mkAfter ''
-      ${homelabState}/bin/homelab-state
-    '';
-
-    environment.etc."resolver/${homelab.internalZone}".text = ''
-      nameserver 127.0.0.1
-      nameserver ${homelab.lanAddress}
-    '';
-
-    launchd.daemons.etcd.serviceConfig = serviceDefaults // {
-      Label = "dev-env.etcd";
-      UserName = "_etcd";
-      GroupName = "_etcd";
-      ProgramArguments = [
-        "${pkgs.etcd}/bin/etcd"
-        "--config-file=${etcdConfig}"
+      environment.etc."mac-environment/kubernetes".source = kubernetesManifests;
+      users.knownGroups = [
+        "_etcd"
+        "_openbao"
       ];
-      WorkingDirectory = etcdState;
-      StandardOutPath = "${logRoot}/etcd/stdout.log";
-      StandardErrorPath = "${logRoot}/etcd/stderr.log";
-    };
-
-    launchd.daemons.openbao.serviceConfig = serviceDefaults // {
-      Label = "dev-env.openbao";
-      UserName = "_openbao";
-      GroupName = "_openbao";
-      ProgramArguments = [
-        "${pkgs.openbao}/bin/bao"
-        "server"
-        "-config=${openbaoConfig}"
+      users.groups._etcd.gid = 790;
+      users.groups._openbao.gid = 791;
+      users.knownUsers = [
+        "_etcd"
+        "_openbao"
       ];
-      WorkingDirectory = openbaoState;
-      StandardOutPath = "${logRoot}/openbao/stdout.log";
-      StandardErrorPath = "${logRoot}/openbao/stderr.log";
-    };
+      users.users._etcd = {
+        uid = 790;
+        gid = 790;
+        home = etcdState;
+        description = "dev-env etcd service";
+      };
+      users.users._openbao = {
+        uid = 791;
+        gid = 791;
+        home = openbaoState;
+        description = "dev-env OpenBao service";
+      };
 
-    launchd.daemons.coredns.serviceConfig = serviceDefaults // {
-      Label = "dev-env.coredns";
-      UserName = "root";
-      ProgramArguments = [
-        "${pkgs.coredns}/bin/coredns"
-        "-conf=${corednsConfig}"
-      ];
-      WorkingDirectory = stateRoot;
-      StandardOutPath = "${logRoot}/coredns/stdout.log";
-      StandardErrorPath = "${logRoot}/coredns/stderr.log";
-    };
+      system.activationScripts.users.text = lib.mkAfter ''
+        ${homelabState}/bin/homelab-state
+      '';
+
+      environment.etc."resolver/${homelab.internalZone}".text = ''
+        nameserver 127.0.0.1
+        nameserver ${homelab.lanAddress}
+      '';
+
+      launchd.daemons.etcd.serviceConfig = serviceDefaults // {
+        Label = "dev-env.etcd";
+        UserName = "_etcd";
+        GroupName = "_etcd";
+        ProgramArguments = [
+          "${pkgs.etcd}/bin/etcd"
+          "--config-file=${etcdConfig}"
+        ];
+        WorkingDirectory = etcdState;
+        StandardOutPath = "${logRoot}/etcd/stdout.log";
+        StandardErrorPath = "${logRoot}/etcd/stderr.log";
+      };
+
+      launchd.daemons.openbao.serviceConfig = serviceDefaults // {
+        Label = "dev-env.openbao";
+        UserName = "_openbao";
+        GroupName = "_openbao";
+        ProgramArguments = [
+          "${pkgs.openbao}/bin/bao"
+          "server"
+          "-config=${openbaoConfig}"
+        ];
+        WorkingDirectory = openbaoState;
+        StandardOutPath = "${logRoot}/openbao/stdout.log";
+        StandardErrorPath = "${logRoot}/openbao/stderr.log";
+      };
+
+      launchd.daemons.coredns.serviceConfig = serviceDefaults // {
+        Label = "dev-env.coredns";
+        UserName = "root";
+        ProgramArguments = [
+          "${pkgs.coredns}/bin/coredns"
+          "-conf=${corednsConfig}"
+        ];
+        WorkingDirectory = stateRoot;
+        StandardOutPath = "${logRoot}/coredns/stdout.log";
+        StandardErrorPath = "${logRoot}/coredns/stderr.log";
+      };
     })
   ];
 }

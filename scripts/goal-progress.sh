@@ -13,10 +13,19 @@ if [ -f "$EV/runtime.env" ]; then
 	# shellcheck disable=SC1090
 	. "$EV/runtime.env"
 fi
+# Prefer disposable local-restic env when present (still fails doctor until offsite).
+if [ -f "$ROOT/.cache/mac-env-state/local-restic/env.sh" ]; then
+	# shellcheck disable=SC1090
+	. "$ROOT/.cache/mac-env-state/local-restic/env.sh"
+	export MAC_ENV_STATE_DIR="${MAC_ENV_STATE_DIR:-$ROOT/.cache/mac-env-state}"
+fi
 export PYTHONPATH="${PYTHONPATH:-$ROOT/operations}"
 export MAC_ENV_OPA="${MAC_ENV_OPA:-$ROOT/operations/.cache/opa}"
 if [ -z "${MAC_ENV_RESTIC:-}" ] && [ -x "$ROOT/.cache/controller-uploads/restic" ]; then
 	export MAC_ENV_RESTIC="$ROOT/.cache/controller-uploads/restic"
+fi
+if [ -z "${MAC_ENV_RESTIC:-}" ] && [ -x "$ROOT/result/bin/restic" ]; then
+	export MAC_ENV_RESTIC="$ROOT/result/bin/restic"
 fi
 
 echo "== harness =="

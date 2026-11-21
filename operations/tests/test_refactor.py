@@ -353,6 +353,19 @@ class CoverageAndDrillTests(unittest.TestCase):
             self.assertIn("offsite-preflight", report.get("next", ""))
             self.assertIn("R2", report.get("next", ""))
 
+    def test_unset_backup_destination_hints_offsite(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            env = readiness_env(root)
+            env["MAC_ENV_RESTIC_REPOSITORY"] = ""
+            approve_baseline(collectors(), root / "state" / "baseline.json", "fixture", True)
+            with patch.dict(os.environ, env, clear=False):
+                with patch("mac_env.security.shutil.which", return_value=None):
+                    report = doctor()
+            self.assertFalse(report["ready"])
+            self.assertTrue(any("not configured" in item for item in report["blockers"]))
+            self.assertIn("offsite-preflight", report.get("next", ""))
+
     def test_live_firewall_ok_when_enabled(self):
         from mac_env.host_evidence import live_firewall
 

@@ -37,14 +37,19 @@ in
 {
   home.packages =
     lib.optionals homelab.runtimes.orbstack [ pkgs.orbstack ]
-    ++ lib.optionals homelab.runtimes.podman [ pkgs.podman pkgs.podman-desktop ]
-    ++ lib.optionals homelab.runtimes.colima [ pkgs.colima pkgs.incus.client ];
+    ++ lib.optionals homelab.runtimes.podman [
+      pkgs.podman
+      pkgs.podman-desktop
+    ]
+    ++ lib.optionals homelab.runtimes.colima [
+      pkgs.colima
+      pkgs.incus.client
+    ];
 
   assertions = [
     {
       assertion =
-        homelab.netbird.managementUrl == null
-        || lib.hasPrefix "https://" homelab.netbird.managementUrl;
+        homelab.netbird.managementUrl == null || lib.hasPrefix "https://" homelab.netbird.managementUrl;
       message = "NetBird self-hosted managementUrl must use HTTPS.";
     }
   ];
@@ -147,15 +152,15 @@ in
     ''
   );
 
-  home.activation.netbirdSelfHosted = lib.mkIf (
-    homelab.runtimes.netbird && homelab.netbird.managementUrl != null
-  ) (
-    lib.hm.dag.entryAfter [ "colimaRuntime" ] ''
-      if [ -x /usr/local/bin/netbird ]; then
-        /usr/local/bin/netbird up --management-url ${lib.escapeShellArg homelab.netbird.managementUrl}
-      else
-        echo "NetBird is installed by system activation; open NetBird.app and sign in after this switch" >&2
-      fi
-    ''
-  );
+  home.activation.netbirdSelfHosted =
+    lib.mkIf (homelab.runtimes.netbird && homelab.netbird.managementUrl != null)
+      (
+        lib.hm.dag.entryAfter [ "colimaRuntime" ] ''
+          if [ -x /usr/local/bin/netbird ]; then
+            /usr/local/bin/netbird up --management-url ${lib.escapeShellArg homelab.netbird.managementUrl}
+          else
+            echo "NetBird is installed by system activation; open NetBird.app and sign in after this switch" >&2
+          fi
+        ''
+      );
 }

@@ -113,13 +113,17 @@ def doctor():
 
 def offsite_recovery_hint(blockers):
     joined = " ".join(blockers)
-    if "local-only" not in joined:
+    if not backup_needs_offsite_hint(joined):
         return ""
     return (
         "make offsite-preflight; then rclone config (R2 Path C) or "
         "netbird up; then sh scripts/bootstrap-offsite-once.sh --confirm "
         "(docs/operations/offsite-restic.md)"
     )
+
+
+def backup_needs_offsite_hint(joined):
+    return "local-only" in joined or "backup destination is not configured" in joined
 
 
 def approved_baseline_present():
