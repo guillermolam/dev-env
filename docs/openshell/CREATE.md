@@ -4,7 +4,9 @@ Status: operator runbook. Sandbox `mac-env-controller` was created 2026-11-21
 (see `receipts/openshell-controller-2026-11-21.json`). Do not re-policy without review.
 
 Prerequisites: OpenShell 0.1.9 gateway authenticated (`openshell status`,
-`openshell whoami`). OrbStack/Docker engine healthy.
+`openshell whoami`). OrbStack/Docker engine healthy. Prefer the flake path
+in [PROVISION.md](PROVISION.md) (`make openshell-provision` then
+`make openshell-start`) over Homebrew.
 
 ## 1. Build or choose an image that has tools
 

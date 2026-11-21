@@ -47,6 +47,10 @@
         pkgs = runtimePkgs;
         inherit (nixpkgs) lib;
       };
+      openshell = import ./homelab/openshell-package.nix {
+        pkgs = runtimePkgs;
+        inherit (nixpkgs) lib;
+      };
       operationsSrc = builtins.path {
         name = "mac-env-operations";
         path = ./operations;
@@ -91,6 +95,7 @@
         colima = pkgs.colima;
         incus-client = pkgs.incus.client;
         inherit (runtimePackages) podman podman-desktop orbstack;
+        inherit openshell;
         netbird-installer = (import ./homelab/netbird-package.nix { pkgs = runtimePkgs; }).installer;
       };
 

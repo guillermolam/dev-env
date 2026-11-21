@@ -51,6 +51,7 @@ Evidence scaffold honestly reports all collectors as incomplete on this host.
 | Capability | Status | Evidence and limit |
 | --- | --- | --- |
 | OpenShell 0.1.9 bootstrap | Installed, locally verified | Reviewed release formula and SHA-256; gateway authenticated; isolated sandbox ready |
+| OpenShell Nix provision | Implemented in tree | `homelab/openshell-package.nix` + `scripts/openshell-provision.sh`; start not yet live-verified |
 | Sandbox denial checks | Passed locally | Protected directory and external TCP denied; no HOME/socket mounts; seccomp and Landlock observed |
 | All-agent OpenShell enforcement | Required, not implemented fleet-wide | Existing desktop agents and separate tool connectors have not been migrated |
 | HOME hidden-agent inventory | Planned, first priority | Metadata/provenance schema and scoped collector design in AGENT_SECURITY_PLAN.md |

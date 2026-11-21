@@ -18,6 +18,7 @@ ops, and self-improvement loops.
 | --- | --- | --- | --- |
 | P1 Harness L1→L2 | Agents can verify docs/commands/CI | Level 3 COMPLETE locally | done (local) |
 | P2 OpenShell work image | Controller tests runnable in sandbox | `mac-env-controller` Ready; OPA 10/10 + **71/71** tests in-sandbox | done (live) |
+| P2b OpenShell Nix provision | Flake-owned gateway start (no brew) | Package + script in tree; operator `make openshell-start` pending | implemented (not live) |
 | P3 Policy/controller defects | Rego freshness/thresholds; PATH; state-dir | Done in code (T23 + Rego) | done (code) |
 | P4 Backup + restore drill | Verified snapshot + empty-dir restore | Local OK; R2 bucket `mac-env-restic` created; doctor still local-only until rclone+token; 1P placeholders | partial (await R2 API token + snapshot) |
 | P5 Security coverage | Real collector sources or explicit gaps | Baseline **approved** (`receipts/baseline-approved-2026-11-21.json`) | done (live) |

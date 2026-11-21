@@ -6,6 +6,7 @@
     orbstack = true;
     podman = true;
     colima = true;
+    openshell = true;
     netbird = false;
   };
   netbird = {

@@ -4,6 +4,7 @@
 {
   imports = [
     ./container-runtimes.nix
+    ./openshell.nix
     ../homelab/openbao-agent.nix
   ];
 

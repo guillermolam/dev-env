@@ -33,6 +33,7 @@ printf '%s\n' \
 	"- Activate only after review: sudo darwin-rebuild switch --impure --flake $ROOT#mac-studio" \
 	"- Source private restic env (local bootstrap or 1Password offsite)" \
 	"- Fill operations/recovery/CHECKLISTS.md section A with evidence" \
+	"- Provision OpenShell gateway: make openshell-provision && make openshell-start" \
 	"- Approve OpenShell controller sandbox: docs/openshell/CREATE.md"
 
 step "5. Checklist pointer"
