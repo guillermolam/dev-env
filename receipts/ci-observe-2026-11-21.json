@@ -1,33 +1,24 @@
 {
-  "recorded_at": "2026-11-21T20:03:00Z",
+  "recorded_at": "2026-11-21T20:35:00Z",
   "branch": "nix-darwin-mac-studio",
-  "observed_via": "gh run list",
-  "runs": [
-    {
-      "workflow": "Harness Verification",
+  "commit": "423a160",
+  "observed_via": "gh run view",
+  "all_green": true,
+  "runs": {
+    "Harness Verification": {"id": 44944323287, "conclusion": "success"},
+    "Shipped Checkpoints": {"id": 44944323285, "conclusion": "success"},
+    "nix": {
+      "id": 44944323290,
       "conclusion": "success",
-      "id": 44943663098
-    },
-    {
-      "workflow": "Shipped Checkpoints",
-      "conclusion": "failure",
-      "id": 44943663112,
-      "root_cause": "HARNESS_RUNNER_REF=v1.10.0 resolved against automated-assessment-skill (tag missing); pin must be assessment skill ref (main)"
-    },
-    {
-      "workflow": "nix",
-      "conclusion": "in_progress_or_prior_failure",
-      "note": "44943663095 in_progress at observe; prior 44941370323 failed"
+      "jobs": {
+        "test mac-env controller and OPA policy": "success",
+        "build darwinConfigurations.mac-studio": "success"
+      }
     }
-  ],
-  "fix_pending_push": [
-    ".github/workflows/harness-checkpoints.yml HARNESS_RUNNER_REF=main",
-    "nixfmt on hosts/home/homelab modules (Check formatting failed)"
-  ],
-  "controller_tests_job": "success on 44943663095",
-  "after_db2f1e8": {
-    "Harness Verification": "success 44944032479",
-    "Shipped Checkpoints": "success 44944032339",
-    "nix": "failure 44944032192 \u2014 pkgs.opa missing; fix to open-policy-agent pending push"
-  }
+  },
+  "fixes_that_unblocked": [
+    "HARNESS_RUNNER_REF=main",
+    "nixfmt on host/home/homelab modules",
+    "pkgs.opa → pkgs.open-policy-agent"
+  ]
 }
