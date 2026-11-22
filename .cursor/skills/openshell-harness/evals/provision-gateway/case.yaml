@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: provision-gateway
+expected_outcome: |
+  The plan pins OpenShell 0.1.9, sets compute_driver to docker, uses
+  make openshell-provision and make openshell-start, and shows the Nix
+  daemon and darwin-rebuild commands without running them.

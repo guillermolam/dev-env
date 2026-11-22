@@ -145,3 +145,5 @@ sandboxed tools; an external UI must not retain independent execution paths.
 - [Operations guide](operations/README.md)
 - [Platform teams](.agents/README.md)
 - [Step hook](.cursor/hooks.json) — alerts the agent after every step
+- [Cloudflare ops](.cursor/skills/cloudflare-ops/SKILL.md)
+- [OpenShell harness](.cursor/skills/openshell-harness/SKILL.md)

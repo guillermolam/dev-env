@@ -136,6 +136,32 @@ printf '%s' "$held_out" | python3 -c 'import json,sys; d=json.load(sys.stdin); a
 rm -f "$board" "$zero"
 rm -rf "$receipts"
 
+skill=.cursor/skills/cloudflare-ops/SKILL.md
+for line in \
+	'sudo /bin/launchctl bootstrap system /Library/LaunchDaemons/systems.determinate.nix-daemon.plist' \
+	'nix store info --store daemon' \
+	'sudo -S' \
+	'OP_SERVICE_ACCOUNT_TOKEN'
+do
+	if ! grep -F -q -- "$line" "$skill"; then
+		echo "cloudflare skill missing: $line" >&2
+		fail=1
+	fi
+done
+
+harness=.cursor/skills/openshell-harness/SKILL.md
+for line in \
+	'0.1.9' \
+	'policy set' \
+	'compute_driver' \
+	'make openshell-provision'
+do
+	if ! grep -F -q -- "$line" "$harness"; then
+		echo "harness skill missing: $line" >&2
+		fail=1
+	fi
+done
+
 if [ "$fail" -ne 0 ]; then
     exit 1
 fi
