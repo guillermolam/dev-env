@@ -200,8 +200,30 @@ in
               homelab.imageDigests.certManagerStartupapicheck
               homelab.imageDigests.externalDns
               homelab.imageDigests.operator
+              homelab.imageDigests.traefik
             ];
           message = "All Kubernetes image digests must be pinned before enabling the homelab.";
+        }
+        {
+          assertion = homelab.stages.gitops -> homelab.stages.kubernetes;
+          message = "The GitOps stage (Argo CD) requires the Kubernetes stage.";
+        }
+        {
+          assertion = homelab.kubernetes.exposeServicesToLan -> homelab.lanAddress != null;
+          message = "LAN exposure requires homelab.lanAddress for DNS records.";
+        }
+        {
+          assertion = homelab.stages.kubernetes -> homelab.runtimes.orbstack;
+          message = "Decision D1: the Kubernetes stage runs on OrbStack; enable homelab.runtimes.orbstack.";
+        }
+        {
+          assertion = homelab.cloudflare.enable -> homelab.cloudflare.acme.email != null;
+          message = "The ACME DNS-01 issuer needs an account email (homelab.cloudflare.acme.email).";
+        }
+        {
+          assertion =
+            !(homelab.cloudflare.enable && homelab.runtimes.netbird) || homelab.netbird.managementUrl != null;
+          message = "With Cloudflare and the NetBird runtime enabled, managementUrl must name a host in the zone.";
         }
         {
           assertion = homelab.runtimes.netbird -> homelab.netbird.credentialsItem != null;
@@ -219,13 +241,23 @@ in
         }
       ];
 
-      environment.systemPackages = lib.optionals homelab.enable [
-        pkgs.coredns
-        pkgs.etcd
-        pkgs.kubectl
-        pkgs.kubernetes-helm
-        pkgs.openbao
-      ];
+      # P1: kubectl and helm ride the Kubernetes stage; oras, argocd and tofu
+      # ride the GitOps stage. Both are independent of homelab.enable.
+      environment.systemPackages =
+        lib.optionals homelab.enable [
+          pkgs.coredns
+          pkgs.etcd
+          pkgs.openbao
+        ]
+        ++ lib.optionals homelab.stages.kubernetes [
+          pkgs.kubectl
+          pkgs.kubernetes-helm
+        ]
+        ++ lib.optionals homelab.stages.gitops [
+          pkgs.oras
+          pkgs.argocd
+          pkgs.opentofu
+        ];
 
     }
     (lib.mkIf homelab.enable {

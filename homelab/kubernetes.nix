@@ -8,6 +8,8 @@ let
   externalDnsVersion = "1.24.0";
   externalDnsAppVersion = "0.24.0";
   connectVersion = "2.4.3";
+  traefikChartVersion = "42.4.1";
+  traefikAppVersion = "3.7.19";
 
   certManagerSource = pkgs.fetchurl {
     url = "https://github.com/cert-manager/cert-manager/releases/download/v${certManagerVersion}/cert-manager.yaml";
@@ -24,6 +26,13 @@ let
     sha256 = "f3984636039b0e7087373f28fbae840a7e7842747df1fd175068e4fc52a9a93b";
   };
 
+  # Decision D6: Traefik terminates TLS for the NetBird host. Chart 42.4.1
+  # ships appVersion v3.7.19 (verified 2026-11-22 against the repo index.yaml).
+  traefikChart = pkgs.fetchurl {
+    url = "https://traefik.github.io/charts/traefik/traefik-${traefikChartVersion}.tgz";
+    sha256 = "sha256-gOpyRrdNW80fhqxZj+ymulFqEQ3ArZ6V39oo2TO0rNs=";
+  };
+
   certManagerImages = [
     "cert-manager-controller"
     "cert-manager-webhook"
@@ -38,13 +47,36 @@ let
     certManagerAcmesolver
     certManagerStartupapicheck
   ];
+  # I1 finding (personal-platform bootstrap/orbstack/opentofu/cert-manager.tf):
+  # OrbStack's internal resolver times out on _acme-challenge SOA lookups,
+  # breaking the DNS-01 self-check. Force public recursive resolvers.
+  dns01Resolvers = "1.1.1.1:53,8.8.8.8:53";
+  solverArgLine = "          - --acme-http01-solver-image=quay.io/jetstack/cert-manager-acmesolver:v${certManagerVersion}";
+  certManagerSourcePatched =
+    let
+      patched =
+        builtins.replaceStrings
+          [ solverArgLine ]
+          [
+            (
+              solverArgLine
+              + "\n          - --dns01-recursive-nameservers-only"
+              + "\n          - --dns01-recursive-nameservers=${dns01Resolvers}"
+            )
+          ]
+          (builtins.readFile certManagerSource);
+    in
+    if patched == builtins.readFile certManagerSource then
+      throw "dev-env: cert-manager DNS-01 resolver patch anchor not found; the upstream manifest changed"
+    else
+      patched;
   certManager = pkgs.writeText "cert-manager.yaml" (
     builtins.replaceStrings
       (map (image: "quay.io/jetstack/${image}:v${certManagerVersion}") certManagerImages)
       (lib.zipListsWith (
         image: digest: "quay.io/jetstack/${image}@sha256:${digest}"
       ) certManagerImages certManagerDigests)
-      (builtins.readFile certManagerSource)
+      certManagerSourcePatched
   );
 
   externalDnsValues = {
@@ -89,8 +121,8 @@ let
         helm template external-dns-internal ${externalDnsChart} \
           --namespace homelab \
           --include-crds \
-          --set-json values=${
-            lib.escapeShellArg (
+          -f ${
+            pkgs.writeText "external-dns-internal-values.json" (
               builtins.toJSON (
                 externalDnsValues
                 // {
@@ -138,8 +170,8 @@ let
       ''
         helm template external-dns-cloudflare ${externalDnsChart} \
           --namespace homelab \
-          --set-json values=${
-            lib.escapeShellArg (
+          -f ${
+            pkgs.writeText "external-dns-cloudflare-values.json" (
               builtins.toJSON (
                 externalDnsValues
                 // {
@@ -163,6 +195,68 @@ let
           } > "$out"
       '';
 
+  traefik =
+    pkgs.runCommand "traefik.yaml"
+      {
+        nativeBuildInputs = [ pkgs.kubernetes-helm ];
+      }
+      ''
+        helm template traefik ${traefikChart} \
+          --namespace traefik \
+          -f ${
+            pkgs.writeText "traefik-values.json" (
+              builtins.toJSON {
+                image = {
+                  registry = "docker.io";
+                  repository = "traefik";
+                  tag = "v${traefikAppVersion}";
+                  # The chart renders registry/repository@digest and ignores
+                  # the tag when digest is set (verified 2026-11-22).
+                  digest = "sha256:${homelab.imageDigests.traefik}";
+                  pullPolicy = "IfNotPresent";
+                };
+                deployment.replicas = 1;
+                updateStrategy.type = "Recreate";
+                service = {
+                  enabled = true;
+                  single = true;
+                  # Chart 42.x: the Kubernetes Service spec lives under
+                  # service.spec (validated against values.schema.json).
+                  # ClusterIP during bring-up per the OrbStack LoadBalancer
+                  # finding in personal-platform/ztna/netbird/README.md.
+                  spec = {
+                    type = homelab.kubernetes.traefikServiceType;
+                  }
+                  // lib.optionalAttrs (homelab.kubernetes.traefikServiceType == "LoadBalancer") {
+                    # Single node; preserves LAN client source IPs (I3).
+                    externalTrafficPolicy = "Local";
+                  };
+                };
+                providers.kubernetesIngress = {
+                  enabled = true;
+                  publishedService.enabled = true;
+                };
+                log.level = "INFO";
+                resources = {
+                  requests = {
+                    cpu = "100m";
+                    memory = "128Mi";
+                  };
+                  limits = {
+                    cpu = "500m";
+                    memory = "512Mi";
+                  };
+                };
+              }
+            )
+          } > "$out"
+        # Supply-chain gate: every rendered image must be digest-pinned.
+        if grep 'image:' "$out" | grep -qv '@sha256:'; then
+          echo "traefik render produced a tag-only image" >&2
+          exit 1
+        fi
+      '';
+
   onePassword =
     pkgs.runCommand "onepassword-operator.yaml"
       {
@@ -171,8 +265,8 @@ let
       ''
         helm template onepassword ${connectChart} \
           --namespace onepassword \
-          --set-json values=${
-            lib.escapeShellArg (
+          -f ${
+            pkgs.writeText "onepassword-values.json" (
               builtins.toJSON {
                 connect = {
                   create = false;
@@ -238,13 +332,59 @@ let
 
   cloudflareSecret = pkgs.writeText "cloudflare-secret.json" (
     builtins.toJSON {
-      apiVersion = "onepassword.com/v1";
-      kind = "OnePasswordItem";
-      metadata = {
-        name = "cloudflare-external-dns";
-        namespace = "homelab";
-      };
-      spec.itemPath = homelab.cloudflare.tokenItem;
+      apiVersion = "v1";
+      kind = "List";
+      items = [
+        {
+          apiVersion = "onepassword.com/v1";
+          kind = "OnePasswordItem";
+          metadata = {
+            name = "cloudflare-external-dns";
+            namespace = "homelab";
+          };
+          spec.itemPath = homelab.cloudflare.tokenItem;
+        }
+      ];
+    }
+  );
+
+  # Decision D2: publicly trusted certificate for the NetBird host via ACME
+  # DNS-01 through Cloudflare. The token stays a 1Password item reference; the
+  # 1Password Connect operator projects it into cert-manager's namespace.
+  acmeDns01Issuer = pkgs.writeText "cloudflare-dns01-issuer.json" (
+    builtins.toJSON {
+      apiVersion = "v1";
+      kind = "List";
+      items = [
+        {
+          apiVersion = "cert-manager.io/v1";
+          kind = "ClusterIssuer";
+          metadata.name = "cloudflare-dns01";
+          spec.acme = {
+            server = homelab.cloudflare.acme.server;
+            email = homelab.cloudflare.acme.email;
+            privateKeySecretRef.name = "cloudflare-dns01-account-key";
+            solvers = [
+              {
+                selector.dnsZones = [ homelab.cloudflare.zone ];
+                dns01.cloudflare.apiTokenSecretRef = {
+                  name = "cloudflare-acme-dns01";
+                  key = "token";
+                };
+              }
+            ];
+          };
+        }
+        {
+          apiVersion = "onepassword.com/v1";
+          kind = "OnePasswordItem";
+          metadata = {
+            name = "cloudflare-acme-dns01";
+            namespace = "cert-manager";
+          };
+          spec.itemPath = homelab.cloudflare.tokenItem;
+        }
+      ];
     }
   );
 
@@ -309,6 +449,7 @@ let
           [
             "homelab"
             "onepassword"
+            "traefik"
           ];
     }
   );
@@ -319,10 +460,12 @@ pkgs.runCommand "homelab-kubernetes" { } ''
   cp ${certManager} "$out/10-cert-manager.yaml"
   cp ${onePassword} "$out/20-onepassword-operator.yaml"
   cp ${pki} "$out/30-openbao-issuer.json"
+  cp ${traefik} "$out/35-traefik.yaml"
   cp ${internalExternalDns} "$out/40-external-dns-internal.yaml"
   cp ${endpoints} "$out/50-dns-endpoints.json"
   ${lib.optionalString homelab.cloudflare.enable ''
     cp ${cloudflareSecret} "$out/25-cloudflare-secret.json"
+    cp ${acmeDns01Issuer} "$out/26-cloudflare-dns01-issuer.json"
     cp ${publicExternalDns} "$out/41-external-dns-cloudflare.yaml"
   ''}
   ${lib.optionalString homelab.runtimes.netbird ''

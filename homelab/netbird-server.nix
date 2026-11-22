@@ -6,9 +6,10 @@
 # - combined/config.yaml.example is the config schema.
 # - Docs updated 2026-11-20 still describe netbirdio/netbird-server and
 #   netbirdio/dashboard. They do not publish dashboard:v2.96.0-rootless.
-# - The v0.83.1 script defaults Traefik to traefik:v3.7.14. The same docs page
-#   says traefik:v3.7.18. Neither is chart 42.4.1 / v3.7.19, so Traefik is not
-#   rendered here.
+# - Decision D6 (2026-11-22): Traefik is the ingress controller. It is
+#   rendered by homelab/kubernetes.nix from chart 42.4.1 (appVersion v3.7.19,
+#   digest-pinned), which resolves the v3.7.14/v3.7.18/v3.7.19 discrepancy
+#   between the NetBird script and docs.
 # - Docker Hub tag netbird-server:0.83.1 has index digest
 #   sha256:f6acc1a6dcb48d10b867ec7e6916c62ef5c8dc2bb198aec9cc637b2dd26c06c9.
 #   A later 0.83.2 tag exists; it is not used, because the macOS client pin is
@@ -161,18 +162,20 @@ pkgs.writeText "netbird.json" (
                   (secretEnv "NB_STORE_ENCRYPTION_KEY" "datastore-encryption-key")
                   (secretEnv "NB_IDP_SESSION_COOKIE_ENCRYPTION_KEY" "idp-session-cookie-encryption-key")
                 ];
+                # Relay /health dials the advertised URL through ingress.
+                # The ingress needs a ready backend before that check can succeed.
                 readinessProbe = {
                   httpGet = {
-                    path = "/health";
-                    port = 9000;
+                    path = "/oauth2/.well-known/openid-configuration";
+                    port = "http";
                   };
                   initialDelaySeconds = 5;
                   periodSeconds = 5;
                 };
                 livenessProbe = {
                   httpGet = {
-                    path = "/health";
-                    port = 9000;
+                    path = "/oauth2/.well-known/openid-configuration";
+                    port = "http";
                   };
                   initialDelaySeconds = 15;
                   periodSeconds = 10;
@@ -359,7 +362,8 @@ pkgs.writeText "netbird.json" (
           name = "netbird-grpc";
           namespace = "netbird";
           annotations = {
-            "cert-manager.io/cluster-issuer" = "openbao-intermediate";
+            # Decision D2: ACME DNS-01 through Cloudflare, not openbao-intermediate.
+            "cert-manager.io/cluster-issuer" = "cloudflare-dns01";
             "traefik.ingress.kubernetes.io/service.serversscheme" = "h2c";
           };
         };
@@ -399,7 +403,7 @@ pkgs.writeText "netbird.json" (
         metadata = {
           name = "netbird-http";
           namespace = "netbird";
-          annotations."cert-manager.io/cluster-issuer" = "openbao-intermediate";
+          annotations."cert-manager.io/cluster-issuer" = "cloudflare-dns01";
         };
         spec = {
           ingressClassName = "traefik";
@@ -438,7 +442,7 @@ pkgs.writeText "netbird.json" (
         metadata = {
           name = "netbird-dashboard";
           namespace = "netbird";
-          annotations."cert-manager.io/cluster-issuer" = "openbao-intermediate";
+          annotations."cert-manager.io/cluster-issuer" = "cloudflare-dns01";
         };
         spec = {
           ingressClassName = "traefik";

@@ -86,7 +86,14 @@ in
       reconcile_orb cpu 4
       reconcile_orb memory_mib 8192
       reconcile_orb ssh.expose_port false
-      reconcile_orb k8s.expose_services false
+      # Stage L1: the Kubernetes stage reconciles the cluster on (decision D1).
+      reconcile_orb k8s.enabled ${if homelab.stages.kubernetes then "true" else "false"}
+      # I3: LAN reach chosen, but personal-platform observed OrbStack opening
+      # listeners on all Mac interfaces even with this toggle off. Declared
+      # from config; stays false until P7 verifies exposure behavior.
+      reconcile_orb k8s.expose_services ${
+        if homelab.kubernetes.exposeServicesToLan then "true" else "false"
+      }
       reconcile_orb docker.set_context true
     ''
   );

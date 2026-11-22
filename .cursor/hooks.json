@@ -40,6 +40,21 @@
         "timeout": 10,
         "loop_limit": 1
       }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "python3 .cursor/hooks/onepassword-vault.py",
+        "matcher": "\\bop\\b",
+        "timeout": 5,
+        "failClosed": true
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": "python3 .cursor/hooks/onepassword-vault.py",
+        "timeout": 5,
+        "failClosed": true
+      }
     ]
   }
 }

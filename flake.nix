@@ -87,11 +87,51 @@
         export MAC_ENV_RESTIC=''${MAC_ENV_RESTIC:-${pkgs.restic}/bin/restic}
         exec ${pkgs.python3}/bin/python3 -m mac_env "$@"
       '';
+
+      # Operator wrapper for the NetBird OpenTofu modules that live in the
+      # personal-platform repo (identity-provider, segments, resto). Read-only
+      # verbs run directly; mutating verbs require NETBIRD_TOFU_CONFIRM=1.
+      # Secrets are injected by `op run --env-file=op.env` when op.env exists;
+      # this script never sees secret values. `op` comes from the host PATH.
+      netbird-tofu = pkgs.writeShellApplication {
+        name = "netbird-tofu";
+        runtimeInputs = [ pkgs.opentofu ];
+        text = ''
+          set -eu
+          platform_dir=''${PERSONAL_PLATFORM_DIR:-$HOME/Git/guillermolam/personal-platform}
+          if [ "$#" -lt 2 ]; then
+            echo "usage: netbird-tofu <module> <tofu verb> [args...]" >&2
+            exit 2
+          fi
+          module=$1
+          shift
+          dir="$platform_dir/ztna/netbird/tofu/$module"
+          if [ ! -f "$dir/main.tf" ]; then
+            echo "netbird-tofu: no module at $dir" >&2
+            exit 2
+          fi
+          case $1 in
+            apply|destroy|import|refresh|state|taint|untaint|force-unlock)
+              if [ "''${NETBIRD_TOFU_CONFIRM:-0}" != "1" ]; then
+                echo "netbird-tofu: '$1' mutates live state; rerun with NETBIRD_TOFU_CONFIRM=1" >&2
+                exit 1
+              fi
+              ;;
+          esac
+          cd "$dir"
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          if [ -f op.env ]; then
+            exec op run --env-file=op.env -- tofu "$@"
+          fi
+          exec tofu "$@"
+        '';
+      };
     in
     {
       # Packaging does not activate the controller. darwin-rebuild switch is a separate step.
       packages.aarch64-darwin = {
         inherit mac-env;
+        inherit netbird-tofu;
         default = mac-env;
         opa = pkgs.open-policy-agent;
         restic = pkgs.restic;
