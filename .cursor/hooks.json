@@ -1,16 +1,37 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "command": "python3 .cursor/hooks/census-board.py sessionStart",
+        "timeout": 15
+      }
+    ],
     "postToolUse": [
       {
         "command": "python3 .cursor/hooks/step-alert.py postToolUse",
         "timeout": 10
+      },
+      {
+        "command": "python3 .cursor/hooks/census-board.py postToolUse",
+        "timeout": 15
       }
     ],
     "postToolUseFailure": [
       {
         "command": "python3 .cursor/hooks/step-alert.py postToolUseFailure",
         "timeout": 10
+      },
+      {
+        "command": "python3 .cursor/hooks/census-board.py postToolUseFailure",
+        "timeout": 15
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 .cursor/hooks/census-board.py stop",
+        "timeout": 15,
+        "loop_limit": 14
       }
     ],
     "subagentStop": [

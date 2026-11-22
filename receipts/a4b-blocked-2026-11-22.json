@@ -1,0 +1,15 @@
+{
+  "event": "a4b-blocked",
+  "ok": false,
+  "date": "2026-11-22",
+  "step": "A4b",
+  "command": "nix build --impure --no-link .#restic",
+  "error": "cannot connect to socket at /nix/var/nix/daemon-socket/socket: Connection refused",
+  "daemon": "systems.determinate.nix-daemon",
+  "kickstart": "sudo -n launchctl kickstart -k system/systems.determinate.nix-daemon",
+  "kickstart_error": "sudo: a password is required",
+  "local_store": "opening lock file /nix/var/nix/db/big-lock: Permission denied",
+  "marker": "receipts/a4b-ok not written",
+  "retried": "2026-11-22T00:58:00Z",
+  "retry_error": "cannot connect to socket at /nix/var/nix/daemon-socket/socket: Connection refused"
+}

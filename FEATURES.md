@@ -58,6 +58,7 @@ Evidence scaffold honestly reports all collectors as incomplete on this host.
 | Personal platform teams | Specs written | `.agents/teams/` 21 agents; stop set is fatal, panic, cyberattack, data integrity, fence drop; not admitted and not activated |
 | Step alert hook | Script written, fixture-tested | `.cursor/hooks.json` after every tool step and subagent stop; ledger gitignored; does not activate the Mac |
 | Provision delegation | Implemented, tested | `homelab/provision-plan.json` plus `next_action`; 10 tests; complexity max 3; no cluster apply |
+| Census board | Implemented, tested | Rust `mac-env-census`; 16 tests; printed on each step and post-commit; workload A left is 8 |
 | HOME hidden-agent inventory | Planned, first priority | Metadata/provenance schema and scoped collector design in AGENT_SECURITY_PLAN.md |
 | Agent identity and durable audit | Planned | OpenShell provider/OPA integration; loss and coverage must be measured |
 | Julia, Zig, Rust and LuaJIT | Planned | Locked Nixpkgs ownership and native/sandbox smoke tests still required |

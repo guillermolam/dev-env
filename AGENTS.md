@@ -20,6 +20,7 @@ Active plan: [docs/exec-plans/active/](docs/exec-plans/active/).
 # Harness
 make verify-harness
 make check-agents
+make census
 
 # Controller quality + tests (prefer OpenShell; needs quality venv + pinned OPA)
 python3 -m venv operations/.cache/quality
