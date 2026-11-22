@@ -126,6 +126,7 @@ fn input_from(opts: &Opts) -> Input {
         system_version: PathBuf::from("/System/Library/CoreServices/SystemVersion.plist"),
         system_profile: PathBuf::from("/nix/var/nix/profiles/system"),
         crontab_text: load_crontab(opts.crontab_file.as_deref()),
+        launchd_list: command_stdout("/bin/launchctl", "list"),
         restic_repository: std::env::var("MAC_ENV_RESTIC_REPOSITORY").unwrap_or_default(),
         restic_password_file: std::env::var_os("MAC_ENV_RESTIC_PASSWORD_FILE")
             .map(PathBuf::from)
@@ -150,7 +151,30 @@ fn default_repo() -> PathBuf {
 }
 
 fn default_path() -> String {
-    std::env::var("PATH").unwrap_or_default()
+    // shortcut: these dirs, not $PATH. Add a dir when a toolchain lives outside the list.
+    let home = default_home();
+    let user = std::env::var("USER").unwrap_or_default();
+    let mut dirs = vec![
+        PathBuf::from("/bin"),
+        PathBuf::from("/usr/bin"),
+        PathBuf::from("/sbin"),
+        PathBuf::from("/usr/sbin"),
+        PathBuf::from("/usr/local/bin"),
+        PathBuf::from("/opt/homebrew/bin"),
+        PathBuf::from("/opt/homebrew/sbin"),
+        PathBuf::from("/nix/var/nix/profiles/default/bin"),
+        PathBuf::from("/run/current-system/sw/bin"),
+        home.join(".nix-profile/bin"),
+        home.join(".local/state/nix/profiles/profile/bin"),
+    ];
+    if !user.is_empty() {
+        dirs.push(PathBuf::from(format!("/etc/profiles/per-user/{user}/bin")));
+    }
+    dirs.into_iter()
+        .filter(|path| path.is_dir())
+        .filter_map(|path| path.into_os_string().into_string().ok())
+        .collect::<Vec<_>>()
+        .join(":")
 }
 
 fn keep_dirs(paths: [PathBuf; 4]) -> Vec<PathBuf> {
@@ -161,8 +185,12 @@ fn load_crontab(path: Option<&Path>) -> String {
     if let Some(path) = path {
         return read_text(path);
     }
-    let output = std::process::Command::new("crontab")
-        .arg("-l")
+    command_stdout("/usr/bin/crontab", "-l")
+}
+
+fn command_stdout(program: &str, arg: &str) -> String {
+    let output = std::process::Command::new(program)
+        .arg(arg)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null())

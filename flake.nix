@@ -92,6 +92,7 @@
         opa = pkgs.open-policy-agent;
         restic = pkgs.restic;
         vulnix = pkgs.vulnix;
+        trivy = pkgs.trivy;
         colima = pkgs.colima;
         incus-client = pkgs.incus.client;
         inherit (runtimePackages) podman podman-desktop orbstack;

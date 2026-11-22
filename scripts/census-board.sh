@@ -13,8 +13,10 @@ if [ ! -x "$bin" ]; then
 	fi
 fi
 if [ -x "$bin" ]; then
-	"$bin" --repo "$root" --board "$root/.agents/runs/census.txt"
-	exit $?
+	"$bin" --repo "$root" --board "$root/.agents/runs/census.txt" >/dev/null
+	rc=$?
+	sh "$root/scripts/census-format.sh" < "$root/.agents/runs/census.txt"
+	exit "$rc"
 fi
 echo "census binary missing" >&2
 if [ "${CENSUS_SOFT:-}" = 1 ]; then

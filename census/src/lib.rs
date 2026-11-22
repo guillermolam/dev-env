@@ -1,7 +1,7 @@
 #![deny(unsafe_code)]
 
 use std::collections::HashSet;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 const WORKLOAD_CURRENT: u64 = 14;
@@ -55,6 +55,7 @@ pub struct Input {
     pub system_version: PathBuf,
     pub system_profile: PathBuf,
     pub crontab_text: String,
+    pub launchd_list: String,
     pub restic_repository: String,
     pub restic_password_file: PathBuf,
     pub walk_cap: u64,
@@ -97,7 +98,7 @@ pub fn census(input: &Input) -> Board {
     let (passed, open_steps) = workload(input);
     let (tools_current, tools_operational) = count_tools(&input.path_env, nix);
     let (services_current, services_operational) =
-        count_level(&input.service_dirs, nix, Level::Plist);
+        count_services(&input.launchd_list, &input.service_dirs, nix);
     let (apps_current, apps_operational) = count_level(&input.app_dirs, nix, Level::App);
     let (files_current, media_current, files_capped) =
         count_files(&input.file_dirs, input.walk_cap);
@@ -224,7 +225,7 @@ fn path_has_tool(path_env: &str, name: &str) -> bool {
 }
 
 fn count_tools(path_env: &str, nix: Option<&Path>) -> (u64, u64) {
-    let mut seen = HashSet::<OsString>::new();
+    let mut seen = HashSet::<PathBuf>::new();
     let mut current = 0u64;
     let mut operational = 0u64;
     for dir in path_dirs(path_env) {
@@ -232,10 +233,6 @@ fn count_tools(path_env: &str, nix: Option<&Path>) -> (u64, u64) {
             continue;
         };
         for entry in entries.flatten() {
-            let name = entry.file_name();
-            if seen.contains(&name) {
-                continue;
-            }
             let path = entry.path();
             let Ok(meta) = std::fs::symlink_metadata(&path) else {
                 continue;
@@ -243,14 +240,76 @@ fn count_tools(path_env: &str, nix: Option<&Path>) -> (u64, u64) {
             if !is_tool(&meta) {
                 continue;
             }
-            seen.insert(name);
+            let key = std::fs::canonicalize(&path).unwrap_or(path);
+            if !seen.insert(key.clone()) {
+                continue;
+            }
             current += 1;
-            if in_nix(&path, nix) {
+            if nix.is_some_and(|root| key.starts_with(root)) {
                 operational += 1;
             }
         }
     }
     (current, operational)
+}
+
+fn count_services(list: &str, dirs: &[PathBuf], nix: Option<&Path>) -> (u64, u64) {
+    let labels = launchd_labels(list);
+    let operational = nix_loaded_services(dirs, nix, &labels);
+    (labels.len() as u64, operational)
+}
+
+fn launchd_labels(text: &str) -> HashSet<String> {
+    let mut labels = HashSet::new();
+    for line in text.lines() {
+        let mut fields = line.split_whitespace();
+        if fields.next().is_none() || fields.next().is_none() {
+            continue;
+        }
+        let Some(label) = fields.next() else {
+            continue;
+        };
+        if fields.next().is_some() || label == "Label" {
+            continue;
+        }
+        labels.insert(label.to_string());
+    }
+    labels
+}
+
+fn nix_loaded_services(dirs: &[PathBuf], nix: Option<&Path>, labels: &HashSet<String>) -> u64 {
+    let mut seen = HashSet::<String>::new();
+    let mut operational = 0u64;
+    for dir in dirs {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            if !level_match(Level::Plist, &entry) {
+                continue;
+            }
+            let Some(stem) = plist_stem(&entry.file_name()) else {
+                continue;
+            };
+            if !labels.contains(&stem) || !in_nix(&entry.path(), nix) {
+                continue;
+            }
+            if seen.insert(stem) {
+                operational += 1;
+            }
+        }
+    }
+    operational
+}
+
+fn plist_stem(name: &OsStr) -> Option<String> {
+    let text = name.to_str()?;
+    let stem = text.strip_suffix(".plist")?;
+    if stem.is_empty() {
+        None
+    } else {
+        Some(stem.to_string())
+    }
 }
 
 fn is_tool(meta: &std::fs::Metadata) -> bool {
@@ -573,7 +632,7 @@ mod tests {
         make_exec(&first.join("tool"));
         input.path_env = format!("{}:{}", path_text(&first), path_text(&link_dir));
         let board = census(&input);
-        assert_row(&board, "tools", 1, 0);
+        assert_row(&board, "tools", 2, 1);
     }
 
     #[cfg(unix)]
@@ -594,8 +653,9 @@ mod tests {
         let mut input = base(root);
         input.nix_prefix = nix;
         input.service_dirs = vec![svc];
+        input.launchd_list = "PID\tStatus\tLabel\n-\t0\tplain\n-\t0\tnix\n-\t0\tother\n".to_string();
         let board = census(&input);
-        assert_row(&board, "services", 2, 1);
+        assert_row(&board, "services", 3, 1);
         let text = render(&board);
         assert!(!text.contains("plain.plist"));
         assert!(!text.contains("managed.plist"));
@@ -968,6 +1028,7 @@ mod tests {
             system_version: root.join("missing-system-version"),
             system_profile: root.join("missing-system-profile"),
             crontab_text: String::new(),
+            launchd_list: String::new(),
             restic_repository: String::new(),
             restic_password_file: root.join("missing-password-file"),
             walk_cap: 200_000,

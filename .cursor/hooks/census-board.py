@@ -105,12 +105,41 @@ def held_stop(kind, text):
     return workload_left(text) not in ("", "0")
 
 
+def pretty(text):
+    script = ROOT / "scripts" / "census-format.sh"
+    env = os.environ.copy()
+    env["CENSUS_COLOR"] = "1"
+    try:
+        done = subprocess.run(
+            [str(script)],
+            input=text,
+            text=True,
+            capture_output=True,
+            timeout=2,
+            check=False,
+            env=env,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return text
+    if done.returncode == 0 and done.stdout:
+        return done.stdout
+    return text
+
+
+def visible(text):
+    return (
+        "Repeat this table verbatim as the first lines of the user-visible reply. "
+        "Hook context is not shown in the chat.\n" + pretty(text)
+    )
+
+
 def emit(kind, text):
+    shown = visible(text)
     if should_continue(kind, text):
-        return {"followup_message": text + CONTINUE}
+        return {"followup_message": shown + CONTINUE}
     if held_stop(kind, text):
-        return {"additional_context": text + HOLD}
-    return {"additional_context": text}
+        return {"additional_context": shown + HOLD}
+    return {"additional_context": shown}
 
 
 def main():

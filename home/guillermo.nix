@@ -18,6 +18,7 @@
     nix-tree # inspect closures
     restic # verified backup/restore (mac-env recovery-drill + production)
     vulnix # Nix advisory scan for mac-env security collectors
+    trivy # filesystem vuln, secret, and misconfig scan
     uv # >=0.5.31 required by github-release git/gh hooks
     rclone # offsite restic backend transport (configure remotes privately)
   ];
