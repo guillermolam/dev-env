@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "skills": {
+    "aikido-device-protection": {
+      "source": "AikidoSec/aikido-skills",
+      "commit": "aa13cd60b2b7ac69ad5dfe0e2ab52e7d74afa1b7",
+      "sourceType": "github",
+      "skillPath": "skills/aikido-device-protection/SKILL.md",
+      "computedHash": "6d133d9717f0d04cbb36d86970e892aa564d5b45ee706e592c2297f09ea61941"
+    },
+    "aikido-mcp-comments": {
+      "source": "AikidoSec/aikido-skills",
+      "commit": "aa13cd60b2b7ac69ad5dfe0e2ab52e7d74afa1b7",
+      "sourceType": "github",
+      "skillPath": "skills/aikido-mcp-comments/SKILL.md",
+      "computedHash": "71646f532c91fcc16bafe09f5dda8d2769f6ccd833814a7d1ff3f1688efa5b97"
+    }
+  }
+}

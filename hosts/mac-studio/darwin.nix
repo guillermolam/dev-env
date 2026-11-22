@@ -8,6 +8,7 @@
 {
   imports = [
     ./netbird.nix
+    ./objective-see.nix
     ./container-runtimes.nix
     ./homelab-services.nix
   ];

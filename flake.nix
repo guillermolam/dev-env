@@ -51,6 +51,10 @@
         pkgs = runtimePkgs;
         inherit (nixpkgs) lib;
       };
+      objectiveSee = import ./homelab/objective-see-package.nix {
+        pkgs = runtimePkgs;
+        inherit (nixpkgs) lib;
+      };
       operationsSrc = builtins.path {
         name = "mac-env-operations";
         path = ./operations;
@@ -98,6 +102,24 @@
         inherit (runtimePackages) podman podman-desktop orbstack;
         inherit openshell;
         netbird-installer = (import ./homelab/netbird-package.nix { pkgs = runtimePkgs; }).installer;
+        # Objective-See tools, pinned to latest upstream releases.
+        inherit (objectiveSee.tools)
+          lulu
+          blockblock
+          oversight
+          ransomwhere
+          reikey
+          donotdisturb
+          whatsyoursign
+          taskexplorer
+          knockknock
+          netiquette
+          dhs
+          kextviewr
+          filemonitor
+          processmonitor
+          dnsmonitor
+          ;
       };
 
       darwinConfigurations.mac-studio = nix-darwin.lib.darwinSystem {

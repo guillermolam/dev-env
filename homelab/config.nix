@@ -9,6 +9,9 @@
     openshell = true;
     netbird = false;
   };
+  objectiveSee = {
+    enable = true;
+  };
   netbird = {
     managementUrl = null;
     credentialsItem = null;

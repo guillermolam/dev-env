@@ -34,3 +34,4 @@ T31,fixture-tested,step-alert hook on postToolUse and subagentStop; planted secr
 T32,tested,provision-plan.json and next_action gates; 10 unit tests; complexity max 3,homelab disabled; digests unpinned; no linux node; no cloud account; playbooks not applied
 T33,tested,mac-env-census board current/operational/left; 16 rust tests; post-commit and step hook print it,workload A left is 8; A4b A5 A8 A9 A10 A11 A12 A13 open
 T34,specified,cloudflare-ops skill separates 1Password service account from macOS sudo,daemon bootstrap and nix-darwin activation not run
+T35,tested,Objective-See tools build from pinned hash-verified releases; codesign+spctl pass; home-manager-path contains user tools,darwin-rebuild switch not run; Installer.app daemon registration stays manual

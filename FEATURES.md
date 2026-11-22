@@ -39,6 +39,7 @@ Neither means installed or operational.
 | Agent harness (docs/CI) | Level 3 COMPLETE (local) | `make verify-harness`: 0 errors/warnings; hooks via `.envrc`; checkpoints CI declared |
 | Doctor readiness path | Fixture-proven | All evidence env + baseline + restic env → `doctor.ready` true (unit test) |
 | OpenShell controller sandbox | Proposed | `docs/openshell/work-sandbox.md`; not created/applied |
+| Objective-See security tools | Built, validated; not activated | 15 tools at latest upstream releases in `homelab/objective-see-package.nix` (LuLu 4.5.7 via overrideAttrs); all build, codesign/Gatekeeper verified; system apps need `darwin-rebuild switch` and a first-launch installer click |
 
 The last validation run was 10/10 Rego tests and 67/67 Python tests. Coverage
 percentage was not measured. `doctor.ready` is true only when blockers is empty
