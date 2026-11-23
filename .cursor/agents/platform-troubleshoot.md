@@ -1,0 +1,1 @@
+../../.agents/teams/troubleshoot/agent.md

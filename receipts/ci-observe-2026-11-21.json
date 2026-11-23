@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-11-21T20:35:00Z",
+  "branch": "nix-darwin-mac-studio",
+  "commit": "423a160",
+  "observed_via": "gh run view",
+  "all_green": true,
+  "runs": {
+    "Harness Verification": {"id": 44944323287, "conclusion": "success"},
+    "Shipped Checkpoints": {"id": 44944323285, "conclusion": "success"},
+    "nix": {
+      "id": 44944323290,
+      "conclusion": "success",
+      "jobs": {
+        "test mac-env controller and OPA policy": "success",
+        "build darwinConfigurations.mac-studio": "success"
+      }
+    }
+  },
+  "fixes_that_unblocked": [
+    "HARNESS_RUNNER_REF=main",
+    "nixfmt on host/home/homelab modules",
+    "pkgs.opa → pkgs.open-policy-agent"
+  ]
+}

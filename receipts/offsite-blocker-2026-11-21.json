@@ -1,0 +1,21 @@
+{
+  "recorded_at": "2026-11-21T12:14:00Z",
+  "doctor_ready": false,
+  "sole_blocker": "backup destination is local-only; configure offsite MAC_ENV_RESTIC_REPOSITORY",
+  "doctor_next": "make offsite-preflight; then rclone config (R2 Path C) or netbird up; then sh scripts/bootstrap-offsite-once.sh --confirm (docs/operations/offsite-restic.md)",
+  "r2": {
+    "bucket": "mac-env-restic",
+    "location": "WEUR",
+    "receipt": "receipts/r2-bucket-2026-11-21.json",
+    "status": "empty_bucket_ready"
+  },
+  "rclone_remotes": [],
+  "netbird": "NeedsLogin_or_unclear",
+  "homelab_sftp": "unreachable_without_netbird",
+  "action_required": [
+    "Create Cloudflare R2 API token (Object Read & Write, scoped to mac-env-restic)",
+    "rclone config create r2 s3 provider=Cloudflare ...",
+    "Set 1P mac-env-offsite MAC_ENV_RESTIC_REPOSITORY=rclone:r2:mac-env-restic/mac-studio",
+    "sh scripts/bootstrap-offsite-once.sh --confirm"
+  ]
+}

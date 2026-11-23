@@ -1,0 +1,75 @@
+name: nix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  darwin:
+    name: build darwinConfigurations.mac-studio
+    runs-on: macos-15 # Apple Silicon (aarch64-darwin)
+    timeout-minutes: 60
+    env:
+      DEVENV_USER: ${{ secrets.DEVENV_USER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: DeterminateSystems/determinate-nix-action@16f94ba7aae399b9f9077c254b6719ec6de7e3e3 # v3.24.2
+
+      - name: Require DEVENV_USER secret
+        run: |
+          if [ -z "$DEVENV_USER" ]; then
+            echo "::error::Repository secret DEVENV_USER is not set"
+            exit 1
+          fi
+
+      - name: Check formatting
+        run: nix fmt -- --check flake.nix hosts/mac-studio/*.nix home/*.nix homelab/*.nix
+
+      - name: Flake check
+        run: nix flake check --impure --all-systems --no-build
+
+      - name: Build system
+        run: nix build --impure --print-build-logs '.#darwinConfigurations.mac-studio.system'
+
+  controller:
+    name: test mac-env controller and OPA policy
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Python quality tools
+        run: |
+          python3 -c 'import sys; assert sys.version_info >= (3, 11), "Python 3.11+ required"'
+          python3 -m venv operations/.cache/quality
+          operations/.cache/quality/bin/python -m pip install pip==26.3
+          operations/.cache/quality/bin/python -m pip install --group quality
+
+      - name: Python style and complexity (maximum 3)
+        run: |
+          operations/.cache/quality/bin/ruff check operations
+          operations/.cache/quality/bin/ruff format --check operations
+          operations/.cache/quality/bin/python operations/tools/check_complexity.py
+
+      - name: Fetch pinned OPA
+        run: python3 operations/tools/fetch_opa.py
+
+      - name: Rego tests
+        run: operations/.cache/opa test operations/policy -v
+
+      - name: Python tests
+        run: PYTHONPATH=operations MAC_ENV_OPA="$PWD/operations/.cache/opa" operations/.cache/quality/bin/python -m unittest discover -s operations/tests -v

@@ -1,0 +1,12 @@
+{
+  "event": "restore-roundtrip",
+  "ok": true,
+  "date": "2026-11-21",
+  "snapshot_id": "545e2c1b6d3049dd836a3896fc9d43cf496a2319e069756d5bc00797c437827d",
+  "source_fixture": ".cache/bootstrap-fixture/note.txt",
+  "destination": ".cache/restore-from-bootstrap",
+  "restored_content": "recover-ready-fixture",
+  "match": true,
+  "offsite": false,
+  "notes": "Restored via mac-env restore files into a new empty directory. Local repo only."
+}

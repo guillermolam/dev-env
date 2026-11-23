@@ -1,0 +1,16 @@
+{
+  "event": "openshell-linux-tool-probes",
+  "ok": true,
+  "date": "2026-11-21",
+  "sandbox": "mac-env-work",
+  "uploaded": {
+    "opa": "linux/arm64 1.22.4",
+    "restic": "linux/arm64 0.19.1"
+  },
+  "probes": {
+    "opa_version": "pass",
+    "restic_version": "pass",
+    "python3": "fail (not in mac-env-work image)"
+  },
+  "note": "Darwin host binaries fail with Exec format error. Use .cache/controller-uploads/linux-arm64/* with --no-git-ignore. python3 still requires mac-env-controller image create."
+}

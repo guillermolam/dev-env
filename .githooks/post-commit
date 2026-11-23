@@ -1,0 +1,6 @@
+#!/bin/sh
+# After each commit, print the census board. Do not fail the commit.
+set -u
+root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+CENSUS_SOFT=1 sh "$root/scripts/census-board.sh" || true
+exit 0

@@ -1,0 +1,23 @@
+{
+  "event": "openshell-controller-ready",
+  "ok": true,
+  "date": "2026-11-21",
+  "sandbox": "mac-env-controller",
+  "phase": "Ready",
+  "image": "mac-env-controller:local",
+  "image_id": "sha256:04b8e08337627a77528cc4ef36f77a8ce2b6a163bf41b9ee42da637635a3a74e",
+  "policy_hash": "a1b9e75814375d72d605e33171bc55023cd0e9776b60051477aab9b154d1a0df",
+  "probes": {
+    "python3": "pass",
+    "opa": "pass",
+    "restic": "pass",
+    "git": "pass",
+    "network_deny": "pass",
+    "opa_tests": "10/10",
+    "unittest_discover": "71/71"
+  },
+  "fixes": [
+    "run_command returns code 127 on FileNotFoundError (Linux lacks fdesetup)"
+  ],
+  "notes": "Quality deps installed via offline venv from uploaded pure-Python wheels."
+}

@@ -1,0 +1,6 @@
+[package]
+name = "mac-env-census"
+version = "0.1.0"
+edition = "2021"
+description = "Integer host inventory board"
+publish = false

@@ -1,0 +1,37 @@
+id,status,acceptance_evidence,blocker
+T01,tested,Root documents and task tables updated,none
+T02,tested,CLI config lock redaction and execution tests,not installed
+T03,partial,Inventory diff Git Nix and Homebrew parser tests,signature and full receipt collection
+T04,tested,CSV Markdown JSON and incomplete diff behavior,live snapshots outside Git
+T05,partial,Non-destructive folder apply test,Brew and dotfiles not migrated
+T06,partial,Vulnix parser and fail-closed collector tests,live security interfaces
+T07,tested,Rego and Python policy tests including freshness thresholds precedence,no approved production baseline
+T08,tested-live-and-fake,Live recovery-drill and bootstrap-local restic 0.19.1,offsite repository unset
+T09,partial,Capability and disabled-apply tests,no verified rollback adapter
+T10,tested,Redaction symlink and quarantine tests,OCR not configured
+T11,blocked,Installer refuses and prints live doctor blockers,deployment inputs absent
+T12,partial,Runbook CHECKLISTS recovery-drill and restore safety,no spare-machine drill
+T13,partial,Local 10 Rego and 67 Python tests,CI and Nix package build not executed
+T14,tested-locally,378 functions max complexity 3/3 Ruff and Python tests pass,hosted CI and Nix build not run
+T15,bootstrap-verified,OpenShell 0.1.9 mTLS and isolation denial checks passed,fleet confinement not established
+T28,implemented,Nix openshell package + openshell-provision.sh + HM LaunchAgent wiring,operator must run make openshell-provision/start; not yet live-verified this session
+T29,tested-live,container-runtimes-provision.sh + brew-purge; brew gone; OrbStack/Podman/Colima/Desktop running from Nix,nix-daemon down so flake rebuild deferred; HM activation still separate
+T29,implemented,container-runtimes-provision.sh + brew-purge for OrbStack/Podman/Colima,live stop+brew-purge pending operator run; HM activation still separate
+T16,tested-locally,Scoped agent inventory hashes CSV/MD fixtures,operator HOME scan and OpenShell cutover pending
+T17,planned,Agent and tool migration acceptance specified,per-agent integration and reviewed cutover
+T18,planned,Identity audit and OPA failure cases specified,telemetry integration
+T19,planned,Julia Zig Rust LuaJIT toolchain and smoke-test plan,package ownership and Darwin Linux validation
+T20,partial,CHECKLISTS.md plus live disposable drill receipt,production backup destination and spare-machine drill
+T21,partial,Nix runtime and homelab modules with fixed artifact hashes,native build activation external inputs image digests and runtime tests absent
+T22,tested-locally,Harness Level 3 COMPLETE make verify-harness 0 errors 0 warnings,hosted CI checkpoint job not yet observed
+T23,tested-locally,State-dir resolution doctor baseline default and Nix wrapper PATH,system dirs not created; install still refused
+T24,tested-locally,Evidence-file collectors doctor.ready fixture E2E recovery-drill,production sources unset
+T25,tested-locally,restic in HM and flake packages check-recovery-prereqs.sh,Home Manager not activated; production env unset
+T26,proposed,OpenShell work-sandbox.md controller image requirements,operator approval and sandbox build
+T27,tested-live,bootstrap-local and scaffold-evidence on host,offsite 1Password env and real alert sources unset
+T30,specified,`.agents` teams for deploy provision configure maintain secure harden troubleshoot remediate; `make check-agents`,not an admitted workload; apply gate not built
+T31,fixture-tested,step-alert hook on postToolUse and subagentStop; planted secret stays out of alert and ledger,not observed firing inside a live Cursor session
+T32,tested,provision-plan.json and next_action gates; 10 unit tests; complexity max 3,homelab disabled; digests unpinned; no linux node; no cloud account; playbooks not applied
+T33,tested,mac-env-census board current/operational/left; 16 rust tests; post-commit and step hook print it,workload A left is 8; A4b A5 A8 A9 A10 A11 A12 A13 open
+T34,specified,cloudflare-ops skill separates 1Password service account from macOS sudo,daemon bootstrap and nix-darwin activation not run
+T35,tested,Objective-See tools build from pinned hash-verified releases; codesign+spctl pass; home-manager-path contains user tools,darwin-rebuild switch not run; Installer.app daemon registration stays manual

@@ -7,3 +7,26 @@ result-*
 
 # Ignore NixOS interactive test driver history
 **/.nixos-test-history
+
+__pycache__/
+*.pyc
+.DS_Store
+operations/.cache/
+.cache/
+.agents/runs/
+
+# Generated Pipelock policy. Not a reviewed project config.
+pipelock.yaml
+
+# Private signing material (public keys may be committed)
+keys/*.key
+!keys/*.key.pub
+
+# Local scratch / editor state
+Untitled-1.md
+.codex/
+
+# Excalidraw library dumps (huge generated)
+*.excalidrawlib
+*.excalidrawlib.excalidraw
+docs/diagrams/Untitled-*.excalidraw

@@ -1,0 +1,22 @@
+{
+  "event": "security-live-collectors",
+  "ok": true,
+  "date": "2026-11-21",
+  "coverage_gaps": [],
+  "collectors": {
+    "firewall": "ok",
+    "tooling": "ok",
+    "access": "ok",
+    "integrity": "ok",
+    "vulnix": "ok"
+  },
+  "vulnix_findings": 96,
+  "vulnix_critical": 0,
+  "vulnix_target": "home-manager ~/.nix-profile (no current-system gcroot)",
+  "doctor_ready": false,
+  "doctor_blockers_remaining": [
+    "backup destination is local-only; configure offsite MAC_ENV_RESTIC_REPOSITORY",
+    "approved baseline is not present"
+  ],
+  "notes": "Baseline approval and offsite restic remain operator-gated. Stealth mode off recorded as firewall finding."
+}

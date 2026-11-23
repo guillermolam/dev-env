@@ -1,0 +1,40 @@
+name: Shipped Checkpoints
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shipped-checkpoints:
+    name: Run checkpoints shipped by skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Fetch the harness skill
+        run: git clone --depth 1 --branch v1.10.0 https://github.com/netresearch/agent-harness-skill.git "$RUNNER_HOME/agent-harness"
+        env:
+          RUNNER_HOME: ${{ runner.temp }}
+
+      - name: Run shipped checkpoints
+        run: bash "$RUNNER_HOME/agent-harness/skills/agent-harness/scripts/run-shipped-checkpoints.sh"
+        env:
+          RUNNER_HOME: ${{ runner.temp }}
+          # automated-assessment-skill ref (not agent-harness v1.10.0)
+          HARNESS_RUNNER_REF: main
